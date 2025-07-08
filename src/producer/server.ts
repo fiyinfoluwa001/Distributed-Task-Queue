@@ -1,10 +1,11 @@
 import express from 'express'
 import {Queue} from 'bullmq'
+import { connection } from '../common/config'
+import bodyParser from 'body-parser'
 import {v4 as uuidv4} from 'uuid'
 import {createBullBoard} from '@bull-board/api'
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { ExpressAdapter } from '@bull-board/express'
-const connection = {host: 'localhost', port: 6379}
 const taskQueue = new Queue('tasks', {connection})
 const app = express()
 app.use(express.json())
@@ -26,7 +27,7 @@ app.post('/tasks', async (req, res) => {
     })
     res.send({id: job.id})
 })
-
+app.use(bodyParser.json())
 app.listen(4000, () => {
     console.log('Producer running on port 4000.')
 })
