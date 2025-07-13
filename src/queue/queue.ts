@@ -76,5 +76,67 @@ private setupEventListeners() {
         })
     })
 }
-
+    registerTaskHandler<T extends Task>(
+    taskType: string,
+    handler: TaskHandler<T>
+): void {
+    this.taskRegistry[taskType] = handler
+    const worker = new Worker(
+        this.queue.name,
+        async(job: Job) => {
+            const task = TaskSchema.parse(job.data)
+            const progress = (p: number) => job.updateProgress(p)
+            try {
+                const handler = this.taskRegistry[task.type]
+                if (!handler) {
+                    throw new Error(`No handler registered for task type ${task.type} `)
+                }
+                const result = await handler( task, progress);
+                return result;
+            } catch (error) {
+                logger.error(`Error processing task ${task.id}: ${error}`)
+                throw error
+            }
+        },
+        {
+            connection: this.redis,
+            concurrency: this.workerOptions.concurrency,
+            stalledInterval: this.workerOptions.stalledInterval,
+            lockDuration: this.workerOptions.lockDuration
+        }
+    )
+    this.workers.push(worker)
+    logger.info(`Registered handler for task type ${taskType}`)
+}
+    async enqueueTask <T extends Omit<Task, "id" | "createdAT">>(task: T):Promise<string> {
+        const taskWithId = {
+            ...task,
+            id: uuidv4(),
+            createdAt: new Date()
+        };
+        const validatedTask = TaskSchema.parse(taskWithId);
+        const job = await this.queue.add(
+            validatedTask.type,
+            validatedTask,
+            {
+                jobId: validatedTask.id,
+                priority: validatedTask.priority,
+                attempts: validatedTask.maxRetries,
+                backoff: {
+                    type: "exponential",
+                    delay: 1000,
+                },
+                timeout: validatedTask.timeout
+            }
+        )
+        logger.info(`Enqueued task ${job.id} of type ${validatedTask.type}`);
+        return job.id;
+    }
+    async close(): Promise<void> {
+        await this.queue.close();
+        await  Promise.all(this.workers.map((worker) => worker.close()))
+        await this.queueEvents.close()
+        this.wss.close()
+        logger.info('Queue and workers closed successfully')
+    }
 }
