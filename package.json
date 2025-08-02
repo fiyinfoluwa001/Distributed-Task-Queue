@@ -1,0 +1,30 @@
+{
+  "name": "dtq",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fiyinfoluwa001/Distributed-Task-Queue.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/fiyinfoluwa001/Distributed-Task-Queue/issues"
+  },
+  "homepage": "https://github.com/fiyinfoluwa001/Distributed-Task-Queue#readme",
+  "dependencies": {
+    "@types/node": "^24.1.0",
+    "express": "^5.1.0",
+    "ioredis": "^5.7.0",
+    "redis": "^5.7.0",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.9.2",
+    "uuid": "^11.1.0"
+  }
+}
