@@ -1,0 +1,38 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_URL")
+}
+model Task {
+  id         String   @id @default(uuid())
+  payload    Json     // Flexible task data
+  priority   Int      @default(0)
+  status     String   // pending, running, completed, failed
+  retryCount Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  jobRuns    JobRun[]
+}
+model JobRun {
+  id        String   @id @default(uuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id])
+  status    String   // running, completed, failed
+  startedAt DateTime @default(now())
+  endedAt   DateTime?
+}
+model Worker {
+  id           String   @id @default(uuid())
+  heartbeat    DateTime @default(now())
+  lastTaskId   String?
+}
