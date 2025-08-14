@@ -1,4 +1,7 @@
-/node_modules
-/api
-.env
+/api/node_modules
+/api/package-lock.json
+.env.example
 /src/generated/prisma
+/node_modules
+package-lock.json
+/worker/node_modules
