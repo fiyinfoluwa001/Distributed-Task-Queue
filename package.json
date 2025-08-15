@@ -1,10 +1,11 @@
 {
-  "name": "dtq",
+  "name": "dtq-scheduler",
   "version": "1.0.0",
-  "description": "A scalable backend for remote teams to scheduleand process tasks with offline syncs, priority queue and fault tolerance.",
+  "description": "A scalable backend for remote teams to schedule and process tasks with offline syncs, priority queue and fault tolerance.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "api:dev": "cd api && npm run start:dev",
+    "worker:dev": "cd worker && npm run start"
   },
   "repository": {
     "type": "git",
