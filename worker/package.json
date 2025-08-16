@@ -4,6 +4,7 @@
     "start": "ts-node src/index.ts"
   },
   "dependencies": {
+    "dotenv": "^17.2.1",
     "ioredis": "^5.3.2"
   },
   "devDependencies": {
