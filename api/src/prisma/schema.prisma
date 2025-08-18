@@ -10,6 +10,8 @@ model Task {
   payload    Json
   priority   Int      @default(0)
   status     String
+   maxRetries      Int       @default(3)
+   nextRetryAt      DateTime?
   retryCount Int      @default(0)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

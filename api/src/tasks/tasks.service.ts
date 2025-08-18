@@ -14,7 +14,7 @@ async createTask(payload: any, priority: number) {
   const task = await this.prisma.task.create({
     data: { payload, priority, status: 'pending' },
   });
-  await this.redis.xadd('tasks', '*', 'taskId', task.id);
+  await this.redis.zadd('tasks', '*', 'taskId', task.id);
   return task;
 }
 

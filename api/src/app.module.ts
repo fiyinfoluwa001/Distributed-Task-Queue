@@ -8,7 +8,7 @@ import { WorkersModule } from './workers/workers.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '../../infra/.env'
+      envFilePath: process.env.NODE_ENV === 'production' ? '../../infra/.env' : '.env',
     }),
     PrismaModule,
     TasksModule,
