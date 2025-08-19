@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 
 @Controller('tasks')
@@ -19,4 +19,21 @@ export class TasksController {
   async getPending() {
     return this.tasksService.getPendingTasks();
   }
+  @Get(':id')
+  async getTask(@Param('id') id: string) {
+    return this.tasksService.getTask(id);
+  }
+  @Post(':id/start')
+  async startTask(@Param('id') id: string) {
+    return this.tasksService.updateTaskStatus(id, 'in-progress')
+  }
+  @Post(':id/complete')
+  async completeTask(@Param('id') id: string) {
+    return this.tasksService.updateTaskStatus(id, 'completed')
+  }
+@Post('sync')
+    async syncTasks(@Body() body: { tasks: { payload: any; priority: number }[] }) {
+      return this.tasksService.syncTasks(body.tasks);
+    }
 }
+  
