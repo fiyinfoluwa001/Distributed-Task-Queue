@@ -11,8 +11,8 @@ model Task {
   priority   Int      @default(0)
   status     String
   retryCount Int      @default(0)
-    maxRetries Int      @default(3)
-    nextRetryAt DateTime?
+  maxRetries Int      @default(3)
+  nextRetryAt DateTime?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   jobRuns    JobRun[]

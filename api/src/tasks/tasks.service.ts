@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Redis } from 'ioredis';
-
+import { Task } from '@prisma/client';
 @Injectable()
 export class TasksService {
   private redis: Redis;
@@ -17,7 +17,7 @@ async createTask(payload: any, priority: number) {
       priority,
       status: 'pending',
       retryCount: 0,
-      maxRetries : 3
+      maxRetries : 3,
     }
   });
 await this.redis.zadd('priority_tasks', priority, task.id);
@@ -41,7 +41,7 @@ await this.redis.zadd('priority_tasks', priority, task.id);
     })
   }
   async syncTasks(tasks: {payload: any; priority: number}[]) {
-    const createdTasks = []
+    const createdTasks: Task[] = [] 
     for (const {payload, priority} of tasks)     {
       const task = await this.createTask(payload, priority);
       createdTasks.push(task)
