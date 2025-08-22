@@ -1,6 +1,7 @@
 /api/node_modules
 /api/package-lock.json
 /api/src/.env
+/api/dist
 /infra/node_modules
 /infra/.env
 /src/generated/prisma

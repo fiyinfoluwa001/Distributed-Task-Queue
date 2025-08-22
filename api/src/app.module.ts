@@ -3,7 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { TasksModule } from './tasks/tasks.module';
 import { WorkersModule } from './workers/workers.module';
-
+import { AuthModule } from './auth/auth.module';
+import { HealthModule } from './health/health.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -13,6 +14,8 @@ import { WorkersModule } from './workers/workers.module';
     PrismaModule,
     TasksModule,
     WorkersModule,
+    AuthModule,
+    HealthModule
   ],
 })
 export class AppModule {}
