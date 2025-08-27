@@ -8,8 +8,7 @@ import { AuthController } from "./auth.controller";
         JwtModule.register({
             secret: process.env.JWT_SECRET,
             signOptions: {expiresIn: '1hr'}
-        }),
-    ],
+        }),],
     controllers: [AuthController],
     providers: [AuthService, JwtStrategy],
     exports: [AuthService]
