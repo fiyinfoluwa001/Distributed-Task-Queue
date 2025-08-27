@@ -1,7 +1,9 @@
 {
   "name": "worker",
-  "scripts": {
-    "start": "ts-node src/index.ts"
+ "scripts": {
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "start:dev": "ts-node src/main.ts"
   },
   "dependencies": {
     "dotenv": "^17.2.1",

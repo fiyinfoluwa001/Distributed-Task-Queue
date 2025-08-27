@@ -8,3 +8,4 @@
 /node_modules
 package-lock.json
 /worker/node_modules
+/worker/dist
