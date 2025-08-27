@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, UseGuards, BadRequestException } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { TasksService } from './tasks.service';
 
@@ -9,6 +9,9 @@ export class TasksController {
 
   @Post()
   async create(@Body() body: { payload: any; priority?: number }) {
+    if (!body?.payload) {
+      throw new BadRequestException('Missing payload in request body.');
+    }
     return this.tasksService.createTask(body.payload, body.priority || 0);
   }
 
