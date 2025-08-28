@@ -9,3 +9,5 @@
 package-lock.json
 /worker/node_modules
 /worker/dist
+/scheduler/package-lock.json
+/scheduler/node_modules

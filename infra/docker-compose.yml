@@ -18,7 +18,7 @@ services:
     build: ../worker 
     env_file: .env
     depends_on: [redis, api]
-  # scheduler:
-  #   build: ../scheduler
-  #   env_file: .env
-  #   depends_on: [redis, api]
+  scheduler:
+    build: ../scheduler
+    env_file: .env
+    depends_on: [redis, api]
