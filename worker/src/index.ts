@@ -1,5 +1,7 @@
 import { Redis } from 'ioredis';
 import * as dotenv from 'dotenv';
+import axios from 'axios';
+import Database = require('better-sqlite3');
 
 dotenv.config({ path: '../../infra/.env' });
 
@@ -9,7 +11,9 @@ const redis = new Redis(process.env.REDIS_URL || 'redis://redis:6379', {
 });
 
 const offlineTasks: { payload: any; priority: number }[] = [];
-
+const db = new Database('offlineTasks.db');
+db.exec(`CREATE TABLE IF NOT EXISTS tasks(
+  )`)
 async function startWorker() {
   try {
     const response = await fetch('http://localhost:3000/workers/register', { method: 'POST' });
