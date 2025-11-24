@@ -202,4 +202,3 @@ Building reliable systems for distributed teams
 
 **Star this repo if you found it helpful!**  
 Contributions welcome — let's build the best open-source task queue together!
-```
