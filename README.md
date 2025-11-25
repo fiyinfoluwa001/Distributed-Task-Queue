@@ -93,7 +93,7 @@ Services:
 ---
 
 ### API Endpoints
-
+(Planning to migrate to GraphQL)
 | Method | Endpoint              | Description                    | Auth     |
 |-------|-----------------------|--------------------------------|----------|
 | POST  | `/auth/login`         | Get JWT token                  | Public   |
