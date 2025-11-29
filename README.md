@@ -1,4 +1,5 @@
-# Distributed Task Queue & Scheduler (DTQ)  
+# Distributed Task Queue & Scheduler (DTQ)
+
 **A fault-tolerant, offline-first, priority-aware task queue built for remote teams**
 
 [![Node.js](https://img.shields.io/badge/Node.js-18-green)](https://nodejs.org/)
@@ -17,17 +18,17 @@ Perfect for scheduling reports, sending notifications, processing uploads — ev
 
 ### Features
 
-| Feature                        | Status | Description |
-|-------------------------------|--------|-----------|
-| Priority Queues               | Done   | High-priority tasks jump ahead using Redis Sorted Sets |
-| Fault Tolerance & Retries     | Done   | Exponential backoff + Dead Letter Queue |
-| Distributed Locking           | Done   | Prevents duplicate processing (`SETNX`) |
-| Offline-First Workers         | Done   | SQLite local cache + auto-sync when online |
-| Recurring / Scheduled Jobs    | Done   | `node-cron` + Luxon timezone support |
-| JWT Authentication            | Done   | Admin & Worker roles |
-| Health & Prometheus Metrics   | Done   | `/health`, `/metrics` (Prometheus-ready) |
-| Horizontal Scaling            | Done   | Scale workers with `docker compose up --scale worker=5` |
-| Full Test Suite               | Done   | Unit + Integration + Load tests |
+| Feature                     | Status | Description                                             |
+| --------------------------- | ------ | ------------------------------------------------------- |
+| Priority Queues             | Done   | High-priority tasks jump ahead using Redis Sorted Sets  |
+| Fault Tolerance & Retries   | Done   | Exponential backoff + Dead Letter Queue                 |
+| Distributed Locking         | Done   | Prevents duplicate processing (`SETNX`)                 |
+| Offline-First Workers       | Done   | SQLite local cache + auto-sync when online              |
+| Recurring / Scheduled Jobs  | Done   | `node-cron` + Luxon timezone support                    |
+| JWT Authentication          | Done   | Admin & Worker roles                                    |
+| Health & Prometheus Metrics | Done   | `/health`, `/metrics` (Prometheus-ready)                |
+| Horizontal Scaling          | Done   | Scale workers with `docker compose up --scale worker=5` |
+| Full Test Suite             | Done   | Unit + Integration + Load tests                         |
 
 ---
 
@@ -69,15 +70,15 @@ DTQ/
 ### Quick Start (5 minutes)
 
 ```bash
-# 1. Clone the repo
+#  Clone the repo
 git clone https://github.com/yourusername/DTQ.git
 cd DTQ
 
-# 2. Start everything with Docker
+#  Start everything with Docker
 cd infra
 docker compose up -d
 
-# 3. Apply database migrations (first time only)
+#  Apply database migrations (first time only)
 cd ../api
 cp .env.example .env
 npx prisma migrate dev --name init
@@ -86,6 +87,7 @@ npx prisma migrate dev --name init
 ```
 
 Services:
+
 - API: `http://localhost:3000`
 - Redis: `localhost:6379`
 - PostgreSQL: `localhost:5432`
@@ -93,16 +95,17 @@ Services:
 ---
 
 ### API Endpoints
+
 (Planning to migrate to GraphQL)
-| Method | Endpoint              | Description                    | Auth     |
+| Method | Endpoint | Description | Auth |
 |-------|-----------------------|--------------------------------|----------|
-| POST  | `/auth/login`         | Get JWT token                  | Public   |
-| POST  | `/tasks`              | Create a task                  | Admin    |
-| GET   | `/tasks`              | List all tasks                 | Admin    |
-| POST  | `/tasks/sync`         | Sync offline tasks             | Worker   |
-| POST  | `/workers/register`   | Worker heartbeat               | Public   |
-| GET   | `/health`             | Health check                   | Public   |
-| GET   | `/metrics`            | Prometheus + JSON metrics      | Public   |
+| POST | `/auth/login` | Get JWT token | Public |
+| POST | `/tasks` | Create a task | Admin |
+| GET | `/tasks` | List all tasks | Admin |
+| POST | `/tasks/sync` | Sync offline tasks | Worker |
+| POST | `/workers/register` | Worker heartbeat | Public |
+| GET | `/health` | Health check | Public |
+| GET | `/metrics` | Prometheus + JSON metrics | Public |
 
 > Full collection: [Postman Collection](./docs/postman_collection.json)
 
@@ -111,23 +114,27 @@ Services:
 ### Testing
 
 #### Run Unit & Integration Tests
+
 ```bash
 cd api
 npm test
 ```
 
 #### Manual Testing (Recommended)
+
 1. Import `docs/postman_collection.json` into Postman
 2. Set environment variable: `baseUrl = http://localhost:3000`
 3. Login → Create tasks → Watch workers process them!
 
 #### Load Testing (1,000+ tasks)
+
 ```bash
 cd tests
 artillery run load-test.yml
 ```
 
 #### Scale Workers
+
 ```bash
 cd infra
 docker compose up -d --scale worker=5
@@ -170,15 +177,15 @@ ts-node src/index.ts
 
 ### Tech Stack Details
 
-| Layer         | Technology                         |
-|-------------|-------------------------------------|
-| API         | NestJS + TypeScript + Prisma        |
-| Queue       | Redis Sorted Sets + Streams         |
-| Database    | PostgreSQL (metadata) + SQLite (offline) |
-| Auth        | JWT (admin/worker roles)            |
-| Scheduler   | node-cron + Luxon (timezone-aware)  |
-| Monitoring  | prom-client (Prometheus)            |
-| Container   | Docker + Docker Compose             |
+| Layer      | Technology                               |
+| ---------- | ---------------------------------------- |
+| API        | NestJS + TypeScript + Prisma             |
+| Queue      | Redis Sorted Sets + Streams              |
+| Database   | PostgreSQL (metadata) + SQLite (offline) |
+| Auth       | JWT (admin/worker roles)                 |
+| Scheduler  | node-cron + Luxon (timezone-aware)       |
+| Monitoring | prom-client (Prometheus)                 |
+| Container  | Docker + Docker Compose                  |
 
 ---
 
