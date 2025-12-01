@@ -1,13 +1,2 @@
-/api/node_modules
-/api/package-lock.json
-/api/src/.env
-/api/dist
-/infra/node_modules
-/infra/.env
-/src/generated/prisma
-/node_modules
-package-lock.json
-/worker/node_modules
-/worker/dist
-/scheduler/package-lock.json
-/scheduler/node_modules
+node_modules/
+.env
