@@ -1,28 +1,93 @@
 version: "3.8"
+
 services:
   mysql:
     image: mysql:8.0
+    container_name: task_queue_mysql
+    restart: always
     environment:
-      - MYSQL_ROOT_PASSWORD=rootpass
-      - MYSQL_DATABASE=dtq
-    ports: -["3306:3306"]
-    volumes: -['./mysql-data:/var/lib/mysql']
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: taskqueue
+      MYSQL_USER: nestjs
+      MYSQL_PASSWORD: nestjs123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
 
   redis:
     image: redis:7-alpine
-    ports: -["6379:6379"]
-  api:
-    build: ../api
-    ports: ["3000:3000"]
-    depends_on: [mysql, redis]
-    env_file: .env
-  workers:
-    build: ../workers
+    container_name: task_queue_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: task_queue_prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+  grafana:
+    image: grafana/grafana:latest
+    container_name: task_queue_grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    volumes:
+      - grafana_data:/var/lib/grafana
     depends_on:
-      - [redis, mysql]
-    deploy:
-      replicas: 1
-  scheduler:
-    build: ../scheduler
+      - prometheus
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: task_queue_app
+    restart: always
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: production
+      DATABASE_HOST: mysql
+      DATABASE_PORT: 3306
+      DATABASE_USER: nestjs
+      DATABASE_PASSWORD: nestjs123
+      DATABASE_NAME: taskqueue
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      JWT_EXPIRATION: 24h
     depends_on:
-      - [api]
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+
+volumes:
+  mysql_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
