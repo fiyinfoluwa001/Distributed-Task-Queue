@@ -1,424 +1,336 @@
-# Distributed Task Queue & Scheduler (DTQ)
+# Distributed Task Queue System
 
-**A fault-tolerant, offline-first, priority-aware task queue built for remote teams**
+[![NestJS](https://img.shields.io/badge/NestJS-10.x-E0234E?logo=nestjs)](https://nestjs.com/)
+[![GraphQL](https://img.shields.io/badge/GraphQL-16.x-E10098?logo=graphql)](https://graphql.org/)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?logo=mysql)](https://www.mysql.com/)
+[![Redis](https://img.shields.io/badge/Redis-7.x-DC382D?logo=redis)](https://redis.io/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![Docker](https://img.shields.io/badge/Docker-24.x-2496ED?logo=docker)](https://www.docker.com/)
 
-[![Node.js](https://img.shields.io/badge/Node.js-18-green)](https://nodejs.org/)
-[![NestJS](https://img.shields.io/badge/NestJS-10-red)](https://nestjs.com/)
-[![GraphQL](https://img.shields.io/badge/GraphQL-Apollo-pink)](https://www.apollographql.com/)
-[![MySQL](https://img.shields.io/badge/MySQL-8-blue)](https://www.mysql.com/)
-[![Redis](https://img.shields.io/badge/Redis-7-red)](https://redis.io/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://www.typescriptlang.org/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-A **scalable, production-ready** distributed task queue designed for remote and distributed teams. Supports **priority queues**, **exponential retry with dead-letter queue**, **distributed locking**, **offline sync**, **recurring jobs**, **GraphQL API**, **JWT auth**, and **Prometheus monitoring**.
-
-Perfect for scheduling reports, sending notifications, processing uploads — even when workers are offline or network is unstable.
+A **production-ready, enterprise-grade** distributed task queue system built with NestJS, GraphQL, MySQL, and Redis. Features real-time subscriptions, distributed locking, worker pools, scheduled jobs, and comprehensive monitoring.
 
 ---
 
-## ✨ Features
+## Features
 
-| Feature                     | Status | Description                                            |
-| --------------------------- | ------ | ------------------------------------------------------ |
-| GraphQL API                 | ✅     | Full GraphQL schema with subscriptions                 |
-| Priority Queues             | ✅     | High-priority tasks jump ahead using Redis Sorted Sets |
-| Fault Tolerance & Retries   | ✅     | Exponential backoff + Dead Letter Queue                |
-| Distributed Locking         | ✅     | Prevents duplicate processing (`SETNX`)                |
-| Offline-First Workers       | ✅     | SQLite local cache + auto-sync when online             |
-| Recurring / Scheduled Jobs  | ✅     | `node-cron` + Luxon timezone support                   |
-| JWT Authentication          | ✅     | Admin, Worker, and Viewer roles                        |
-| Role-Based Access Control   | ✅     | Guard-based authorization                              |
-| Health & Prometheus Metrics | ✅     | `/health`, `/metrics` (Prometheus-ready)               |
-| Horizontal Scaling          | ✅     | Scale workers with Docker Compose                      |
-| GraphQL Subscriptions       | ✅     | Real-time task updates via WebSocket                   |
-| Full Test Suite             | ✅     | Unit + Integration + Load tests                        |
+### Core Functionality
 
----
+- **GraphQL API** with queries, mutations, and real-time subscriptions
+- **Distributed Task Queue** powered by BullMQ and Redis
+- **MySQL Database** with TypeORM for persistence
+- **Worker Pool** with configurable concurrency
+- **Scheduled Jobs** using cron expressions
+- **Distributed Locking** to prevent duplicate processing
+- **Priority Queue** with LOW, NORMAL, HIGH, CRITICAL levels
+- **Automatic Retries** with exponential backoff
+- **Task Lifecycle** tracking (pending → processing → completed/failed)
 
-## 🏗️ Architecture Overview
+### Security & Authentication
 
-```
-┌──────────────────┐
-│   API Gateway    │
-│  (NestJS Router) │
-└────────┬─────────┘
-         │
-    ┌────┴────────────────────────┐
-    │                             │
-    ▼                             ▼
-┌─────────────┐        ┌──────────────────┐
-│  GraphQL    │        │   REST Auth      │
-│  Resolvers  │        │   Endpoints      │
-└────┬────────┘        └──────────────────┘
-     │
-     ▼
-┌──────────────────────────────────────────────┐
-│         Business Logic Services              │
-│  (TaskService, QueueService, AuthService)    │
-└────┬────────────────────┬──────────┬─────────┘
-     │                    │          │
-     ▼                    ▼          ▼
-┌──────────┐      ┌──────────┐  ┌─────────┐
-│  MySQL   │      │  Redis   │  │ Workers │
-│ (Metadata)      │ (Queue)  │  │(Async)  │
-└──────────┘      └──────────┘  └─────────┘
-                        │
-                        ▼
-                 ┌──────────────┐
-                 │  Scheduler   │
-                 │ (Cron Jobs)  │
-                 └──────────────┘
-```
+- **JWT Authentication** with access and refresh tokens
+- **Role-Based Access Control** (User, Admin, Worker)
+- **Rate Limiting** to prevent abuse
+- **CORS Configuration** for cross-origin requests
+
+### Monitoring & Observability
+
+- **Prometheus Metrics** for queue, worker, and task stats
+- **Grafana Dashboards** for visualization
+- **Structured Logging** with Winston
+- **Health Checks** for all services
+- **Performance Tracking** with processing time metrics
+
+### DevOps & Deployment
+
+- **Docker & Docker Compose** for easy setup
+- **Multi-stage Docker Build** for optimized images
+- **Horizontal Scaling** support for workers
+- **Graceful Shutdown** handling
+- **Database Migrations** with TypeORM
 
 ---
 
-## 📁 Project Structure
+## Architecture
 
 ```
-DTQ/
-├── src/
-│   ├── config/
-│   │   ├── database.config.ts       # TypeORM configuration
-│   │   └── graphql.config.ts        # Apollo GraphQL config
-│   ├── entities/
-│   │   ├── task.entity.ts           # Task data model
-│   │   ├── worker.entity.ts         # Worker registration
-│   │   └── user.entity.ts           # Auth users
-│   ├── graphql/
-│   │   ├── resolvers/
-│   │   │   ├── task.resolver.ts     # Task mutations/queries
-│   │   │   ├── worker.resolver.ts
-│   │   │   └── health.resolver.ts
-│   │   └── dto/
-│   │       ├── task.dto.ts
-│   │       ├── worker.dto.ts
-│   │       └── create-task.input.ts
-│   ├── services/
-│   │   ├── task.service.ts          # Task CRUD & logic
-│   │   ├── task-queue.service.ts    # Queue operations
-│   │   ├── redis.service.ts         # Redis client wrapper
-│   │   ├── worker.service.ts        # Worker lifecycle
-│   │   ├── scheduler.service.ts     # Recurring jobs
-│   │   └── metrics.service.ts       # Prometheus metrics
-│   ├── auth/
-│   │   ├── jwt.strategy.ts
-│   │   ├── jwt-auth.guard.ts
-│   │   ├── roles.guard.ts
-│   │   └── auth.service.ts
-│   ├── filters/
-│   │   └── graphql-error.filter.ts
-│   ├── app.module.ts
-│   └── main.ts
-├── infra/
-│   ├── docker-compose.yml
-│   ├── .env.example
-│   └── scripts/
-│       ├── db-init.sql
-│       └── seed-users.ts
-├── tests/
-│   ├── unit/
-│   ├── integration/
-│   └── load/
-│       └── load-test.yml
-├── docs/
-│   ├── ARCHITECTURE.md
-│   ├── API-GUIDE.md
-│   ├── DEPLOYMENT.md
-│   └── GRAPHQL-SCHEMA.md
-├── .env.example
-├── docker-compose.yml
-├── package.json
-└── README.md
+┌─────────────────────────────────────────────────────────────┐
+│                     GraphQL API Layer                        │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│  │   Queries    │  │  Mutations   │  │ Subscriptions│      │
+│  └──────────────┘  └──────────────┘  └──────────────┘      │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Business Logic Layer                      │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│  │ TaskService  │  │ QueueService │  │  AuthService │      │
+│  └──────────────┘  └──────────────┘  └──────────────┘      │
+└─────────────────────────────────────────────────────────────┘
+                            │
+              ┌─────────────┼─────────────┐
+              ▼             ▼             ▼
+    ┌──────────────┐ ┌──────────┐ ┌──────────────┐
+    │    MySQL     │ │  Redis   │ │   Workers    │
+    │  (Database)  │ │  (Queue) │ │   (Pool)     │
+    └──────────────┘ └──────────┘ └──────────────┘
+              │             │             │
+              └─────────────┼─────────────┘
+                            ▼
+                  ┌──────────────────┐
+                  │   Prometheus     │
+                  │   (Monitoring)   │
+                  └──────────────────┘
 ```
 
 ---
 
-## 🚀 Quick Start (5 minutes)
+## Quick Start
 
 ### Prerequisites
 
 - Node.js 18+
 - Docker & Docker Compose
-- MySQL client (optional, for debugging)
+- npm or yarn
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/DTQ.git
-cd DTQ
+git clone https://github.com/yourusername/nestjs-task-queue.git
+cd nestjs-task-queue
 
 # Install dependencies
 npm install
 
-# Setup environment
+# Copy environment variables
 cp .env.example .env
 
-# Start infrastructure (MySQL, Redis)
-cd infra
-docker compose up -d
+# Start infrastructure services
+docker-compose up -d mysql redis prometheus grafana
 
-# Apply database migrations
-cd ../
-npm run typeorm migration:run
+# Run database migrations (if any)
+npm run migration:run
 
-# Start the API (development mode with hot-reload)
+# Start the application
 npm run start:dev
 ```
 
-**Done!** Your DTQ is now running:
+**Application will be available at:**
 
-- **GraphQL Playground**: http://localhost:3000/graphql
-- **Health Check**: http://localhost:3000/health
-- **Metrics**: http://localhost:3000/metrics
-
----
-
-## 📊 Services & Ports
-
-| Service     | Port   | Purpose                    |
-| ----------- | ------ | -------------------------- |
-| API/GraphQL | `3000` | Main application           |
-| MySQL       | `3306` | Task metadata              |
-| Redis       | `6379` | Queue & locks              |
-| Prometheus  | `9090` | Metrics scraper (optional) |
+- GraphQL Playground: http://localhost:4000/graphql
+- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3000 (admin/admin123)
 
 ---
 
-## 🔌 GraphQL API Endpoints
+## API Documentation
 
-### Query Examples
+### GraphQL Schema
+
+#### **Queries**
 
 ```graphql
-# Get all tasks
-query {
-  tasks(status: "pending", limit: 50) {
+# Get a single task
+query GetTask {
+  task(id: "uuid") {
     id
     name
+    status
     priority
+    result
+    createdAt
+  }
+}
+
+# Get paginated tasks with filters
+query GetTasks {
+  tasks(
+    filter: { status: PENDING, priority: HIGH }
+    pagination: { page: 1, limit: 20, sortBy: "priority", sortOrder: "DESC" }
+  ) {
+    items {
+      id
+      name
+      status
+      priority
+    }
+    total
+    totalPages
+    hasNextPage
+  }
+}
+
+# Get my tasks
+query MyTasks {
+  myTasks {
+    id
+    name
     status
     createdAt
-    error
   }
 }
 
-# Get single task details
-query {
-  task(id: "uuid-here") {
-    id
-    name
-    payload
-    status
-    retries
-    maxRetries
-  }
-}
-
-# Get workers
-query {
-  workers {
-    id
-    name
-    activeTaskCount
-    isOnline
-    lastHeartbeat
+# Get task statistics (admin only)
+query TaskStats {
+  taskStats {
+    total
+    pending
+    processing
+    completed
+    failed
+    averageProcessingTime
+    successRate
   }
 }
 ```
 
-### Mutation Examples
+#### **Mutations**
 
 ```graphql
-# Create a task
-mutation {
+# Create a new task
+mutation CreateTask {
   createTask(
     input: {
-      name: "send-email"
-      payload: { email: "user@example.com" }
-      priority: 10
+      name: "Process Video"
+      description: "Transcode video to multiple formats"
+      priority: HIGH
+      payload: {
+        videoUrl: "https://example.com/video.mp4"
+        formats: ["720p", "1080p", "4K"]
+      }
+      maxAttempts: 3
     }
   ) {
     id
+    name
     status
-    createdAt
+    priority
   }
 }
 
-# Create recurring task (daily at 2am)
-mutation {
-  createTask(
-    input: {
-      name: "daily-report"
-      payload: { reportType: "sales" }
-      cronExpression: "0 2 * * *"
-      isRecurring: true
-    }
-  ) {
+# Update a task
+mutation UpdateTask {
+  updateTask(id: "uuid", input: { name: "Updated Name", priority: CRITICAL }) {
     id
+    name
+    priority
   }
 }
 
 # Retry a failed task
-mutation {
-  retryTask(id: "task-uuid") {
+mutation RetryTask {
+  retryTask(id: "uuid") {
     id
     status
-    retries
+    attempts
   }
 }
 
-# Cancel task
-mutation {
-  cancelTask(id: "task-uuid")
+# Cancel a task
+mutation CancelTask {
+  cancelTask(id: "uuid") {
+    id
+    status
+  }
+}
+
+# Delete a task
+mutation DeleteTask {
+  deleteTask(id: "uuid")
+}
+
+# Bulk delete tasks (admin only)
+mutation BulkDelete {
+  bulkDeleteTasks(ids: ["uuid1", "uuid2"]) {
+    successCount
+    failureCount
+    successIds
+    failureIds
+  }
 }
 ```
 
-### Real-Time Subscriptions
+#### **Subscriptions**
 
 ```graphql
-# Subscribe to new tasks
-subscription {
+# Subscribe to task creation events
+subscription OnTaskCreated {
   taskCreated {
     id
     name
     status
+    priority
   }
 }
 
-# Subscribe to task status changes
-subscription {
-  taskStatusChanged {
+# Subscribe to task updates
+subscription OnTaskUpdated {
+  taskUpdated {
     id
     status
+    result
     completedAt
   }
 }
-```
 
----
-
-## 🔐 Authentication
-
-### Login (Get JWT Token)
-
-```bash
-curl -X POST http://localhost:3000/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "admin",
-    "password": "admin123"
-  }'
-```
-
-Response:
-
-```json
-{
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "id": "uuid",
-    "username": "admin",
-    "role": "admin"
-  }
+# Subscribe to task deletions
+subscription OnTaskDeleted {
+  taskDeleted
 }
 ```
 
-### Use Token in GraphQL Requests
-
-```bash
-curl -X POST http://localhost:3000/graphql \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{ "query": "{ tasks { id } }" }'
-```
-
-### Roles
-
-- **admin**: Full access (create, update, delete tasks)
-- **worker**: Can process tasks and heartbeat
-- **viewer**: Read-only access
-
 ---
 
-## 🔄 Task Lifecycle
+## Configuration
 
-```
-┌─────────┐
-│ PENDING │  ← Task created, waiting in queue
-└────┬────┘
-     │
-     ▼
-┌──────────────┐
-│ PROCESSING   │  ← Worker picked up task
-└────┬─────────┘
-     │
-     ├─────────────────────────┬──────────────────────────┐
-     │                         │                          │
-     ▼                         ▼                          ▼
-┌──────────┐         ┌─────────────────┐        ┌──────────────┐
-│COMPLETED │         │     PENDING     │        │    FAILED    │
-│(Success) │         │  (Retry Count<) │        │(Max Retries) │
-└──────────┘         └────────┬────────┘        └──────────────┘
-                              │                         │
-                              │ (exponential backoff)   │
-                              └──────┬──────────────────┘
-                                     │
-                                     ▼
-                           ┌──────────────────┐
-                           │  DEAD_LETTER     │
-                           │  (Failed, DLQ)   │
-                           └──────────────────┘
+### Environment Variables
+
+```bash
+# Application
+NODE_ENV=development
+PORT=4000
+
+# Database (MySQL)
+DATABASE_HOST=localhost
+DATABASE_PORT=3306
+DATABASE_USER=nestjs
+DATABASE_PASSWORD=nestjs123
+DATABASE_NAME=taskqueue
+
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# JWT
+JWT_SECRET=your-secret-key
+JWT_EXPIRATION=24h
+
+# Queue Configuration
+QUEUE_CONCURRENCY=5
+QUEUE_MAX_RETRIES=3
+QUEUE_RETRY_DELAY=5000
+
+# Worker Configuration
+WORKER_ENABLED=true
+WORKER_CONCURRENCY=10
+
+# Scheduler
+SCHEDULER_ENABLED=true
 ```
 
 ---
 
-## 📈 Monitoring & Metrics
-
-### Health Check
+## Testing
 
 ```bash
-curl http://localhost:3000/health
+# Unit tests
+npm run test
 
-# Response:
-{
-  "status": "ok",
-  "timestamp": "2024-01-20T10:00:00Z",
-  "uptime": 3600,
-  "workers": {
-    "online": 5,
-    "total": 5
-  },
-  "queue": {
-    "depth": 42,
-    "deadLetter": 2
-  }
-}
-```
+# E2E tests
+npm run test:e2e
 
-### Prometheus Metrics
-
-```bash
-curl http://localhost:3000/metrics
-
-# Metrics include:
-dtq_tasks_total{status="completed"} 1024
-dtq_tasks_total{status="failed"} 12
-dtq_queue_depth 42
-dtq_task_duration_seconds_bucket{le="1"} 892
-```
-
----
-
-## 🧪 Testing
-
-### Unit & Integration Tests
-
-```bash
-# Run all tests
-npm test
-
-# Run with coverage
+# Test coverage
 npm run test:cov
 
 # Watch mode
@@ -428,223 +340,149 @@ npm run test:watch
 ### Load Testing
 
 ```bash
-# Install artillery
-npm install -g artillery
+# Using Apache Bench
+ab -n 10000 -c 100 \
+  -p task_payload.json \
+  -T 'application/json' \
+  http://localhost:4000/graphql
 
-# Run load test (1000+ tasks/minute)
-cd tests
-artillery run load-test.yml
-
-# Results show:
-# - Response times
-# - Error rates
-# - Throughput
-# - Queue depth over time
+# Using Artillery
+artillery quick --count 100 --num 50 \
+  http://localhost:4000/graphql
 ```
-
-### Manual Testing with GraphQL Playground
-
-1. Open http://localhost:3000/graphql
-2. Get JWT token from `/auth/login` endpoint
-3. Add to headers: `{"Authorization": "Bearer YOUR_TOKEN"}`
-4. Create & monitor tasks in real-time
 
 ---
 
-## 🐳 Docker Deployment
+## Monitoring
 
-### Scale Workers Horizontally
+### Prometheus Metrics
+
+Access Prometheus at `http://localhost:9090`
+
+**Available Metrics:**
+
+- `task_queue_length` - Number of tasks in queue
+- `task_queue_active` - Active tasks being processed
+- `task_processing_duration_seconds` - Task processing time histogram
+- `task_status_total` - Total tasks by status
+- `worker_jobs_processed_total` - Total jobs processed by workers
+
+### Grafana Dashboards
+
+Access Grafana at `http://localhost:3000` (admin/admin123)
+
+**Sample Queries:**
+
+```promql
+# Queue length over time
+task_queue_length
+
+# Success rate
+rate(task_status_total{status="completed"}[5m]) /
+rate(task_status_total[5m])
+
+# Average processing time
+rate(task_processing_duration_seconds_sum[5m]) /
+rate(task_processing_duration_seconds_count[5m])
+```
+
+---
+
+## Deployment
+
+### Docker Compose (Production)
 
 ```bash
-# Start 5 workers
-docker compose up --scale worker=5
+# Build and start all services
+docker-compose up -d --build
 
-# Start 10 workers
-docker compose up --scale worker=10
+# Scale workers
+docker-compose up -d --scale app=3
+
+# View logs
+docker-compose logs -f app
+
+# Stop services
+docker-compose down
 ```
 
-### Production Deployment
+### Kubernetes (Example)
 
-```bash
-# Build for production
-npm run build
-
-# Start with production env
-NODE_ENV=production npm run start:prod
-```
-
-See [DEPLOYMENT.md](./docs/DEPLOYMENT.md) for Kubernetes & cloud setup.
-
----
-
-## 🔧 Development
-
-### Hot-Reload Development
-
-```bash
-# Terminal 1: API
-npm run start:dev
-
-# Terminal 2: Worker process
-npm run worker:dev
-
-# Terminal 3: Scheduler
-npm run scheduler:dev
-```
-
-### Environment Variables
-
-```env
-# Database
-DATABASE_HOST=localhost
-DATABASE_PORT=3306
-DATABASE_USER=dtq_user
-DATABASE_PASSWORD=dtq_pass
-DATABASE_NAME=dtq
-
-# Redis
-REDIS_HOST=localhost
-REDIS_PORT=6379
-
-# JWT
-JWT_SECRET=your-secret-key-min-32-chars
-JWT_EXPIRATION=24h
-
-# Worker
-WORKER_CONCURRENCY=5
-RETRY_ATTEMPTS=3
-RETRY_BACKOFF=1000
-
-# App
-NODE_ENV=development
-APP_PORT=3000
-LOG_LEVEL=debug
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: task-queue-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: task-queue
+  template:
+    metadata:
+      labels:
+        app: task-queue
+    spec:
+      containers:
+        - name: app
+          image: task-queue:latest
+          ports:
+            - containerPort: 4000
+          env:
+            - name: DATABASE_HOST
+              value: mysql-service
+            - name: REDIS_HOST
+              value: redis-service
 ```
 
 ---
 
-## 📦 Tech Stack
+## Security Best Practices
 
-| Layer                | Technology                            |
-| -------------------- | ------------------------------------- |
-| **Runtime**          | Node.js 18+                           |
-| **Framework**        | NestJS 10                             |
-| **API**              | GraphQL (Apollo Server) + REST (Auth) |
-| **Database**         | MySQL 8 (metadata)                    |
-| **Cache/Queue**      | Redis 7 (Sorted Sets, Streams)        |
-| **Auth**             | JWT + Passport                        |
-| **Scheduler**        | node-cron + Luxon                     |
-| **Monitoring**       | prom-client + Prometheus              |
-| **Testing**          | Jest + Artillery                      |
-| **Containerization** | Docker + Docker Compose               |
-| **Language**         | TypeScript 5                          |
+1. **Change default credentials** in production
+2. **Use strong JWT secrets** (generate with `openssl rand -base64 32`)
+3. **Enable HTTPS/TLS** for production
+4. **Implement rate limiting** (already included)
+5. **Regular security audits** with `npm audit`
+6. **Keep dependencies updated**
+7. **Use environment variables** for sensitive data
 
 ---
 
-## 🚨 Key Features Explained
+## Contributing
 
-### Priority Queuing
-
-Tasks are sorted by priority in Redis Sorted Sets. Higher priority tasks are processed first:
-
-```
-PRIORITY | TASK_ID
----------|----------
-20       | task-critical-001
-10       | task-high-001
-5        | task-normal-001
-1        | task-low-001
-```
-
-### Distributed Locking
-
-Prevents duplicate processing:
-
-```typescript
-const hasLock = await redis.set(
-  `dtq:lock:${taskId}`,
-  "1",
-  "EX",
-  30, // 30 second TTL
-  "NX" // Only if doesn't exist
-);
-```
-
-### Exponential Backoff Retries
-
-```
-Attempt 1: Wait 2^0 * 1000 = 1s
-Attempt 2: Wait 2^1 * 1000 = 2s
-Attempt 3: Wait 2^2 * 1000 = 4s
-Attempt 4: Wait 2^3 * 1000 = 8s → Move to Dead Letter Queue
-```
-
-### Recurring Jobs
-
-```graphql
-# Daily report at 2 AM
-mutation {
-  createTask(
-    input: {
-      name: "daily-report"
-      cronExpression: "0 2 * * *" # Cron format
-      isRecurring: true
-    }
-  ) {
-    id
-  }
-}
-```
-
----
-
-## 📚 Documentation
-
-- [Architecture Deep Dive](./docs/ARCHITECTURE.md)
-- [GraphQL Schema Reference](./docs/GRAPHQL-SCHEMA.md)
-- [API Usage Guide](./docs/API-GUIDE.md)
-- [Deployment Guide](./docs/DEPLOYMENT.md)
-- [Troubleshooting](./docs/TROUBLESHOOTING.md)
-
----
-
-## 🤝 Contributing
-
-Contributions welcome! Please:
+Contributions are welcome! Please follow these steps:
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing`)
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
 ---
 
-## 📋 Roadmap
+## License
 
-- [ ] Web Dashboard (React + Recharts)
-- [ ] Task Webhook Notifications
-- [ ] Grafana Dashboard Templates
-- [ ] Kubernetes Helm Charts
-- [ ] Task Rate Limiting & Burst Handling
-- [ ] Multi-tenant Support
-- [ ] gRPC Workers (for Go/Rust/Java clients)
-- [ ] Task Dependencies & Workflows
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 📄 License
+## Acknowledgments
 
-MIT License - see LICENSE file for details
-
----
-
-## 🙋 Support & Questions
-
-- **Issues**: [GitHub Issues](https://github.com/fiyinfoluwa001/DTQ/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/fiyinfoluwa001/DTQ/discussions)
-- **Email**: support@example.com
+- [NestJS](https://nestjs.com/) - Progressive Node.js framework
+- [BullMQ](https://docs.bullmq.io/) - Redis-based queue library
+- [TypeORM](https://typeorm.io/) - ORM for TypeScript
+- [Apollo Server](https://www.apollographql.com/) - GraphQL server
+- [Prometheus](https://prometheus.io/) - Monitoring system
 
 ---
 
-**Made with ❤️ for distributed teams**
+## Contact
+
+For questions or support:
+
+- Create an issue on GitHub
+- Email: boluwatifehonour@gmail.com
+- Twitter: [@BoluwatifeOjo10](https://x.com/BoluwatifeOjo10)
+
+---
