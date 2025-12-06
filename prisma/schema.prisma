@@ -1,22 +1,26 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")
 }
-
 enum UserRole {
-  USER
   ADMIN
+  USER
   WORKER
 }
 
 enum TaskStatus {
   PENDING
+  QUEUED
   PROCESSING
   COMPLETED
   FAILED
@@ -30,70 +34,60 @@ enum TaskPriority {
   CRITICAL
 }
 
-// ========== MODELS ==========
-
 model User {
-  id          String    @id @default(uuid())
-  email       String    @unique
-  password    String
-  firstName   String    @map("first_name")
-  lastName    String    @map("last_name")
-  role        UserRole  @default(USER)
-  isActive    Boolean   @default(true) @map("is_active")
-  lastLoginAt DateTime? @map("last_login_at")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      UserRole @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tasks     Task[]
 
-  // Relations
-  tasks Task[]
-
-  @@index([email])
   @@map("users")
 }
 
 model Task {
-  id             String       @id @default(uuid())
-  name           String
-  description    String?      @db.Text
-  status         TaskStatus   @default(PENDING)
-  priority       TaskPriority @default(NORMAL)
-  payload        Json?
-  result         Json?
-  error          String?      @db.Text
-  attempts       Int          @default(0)
-  maxAttempts    Int          @default(3) @map("max_attempts")
-  scheduledAt    DateTime?    @map("scheduled_at")
-  startedAt      DateTime?    @map("started_at")
-  completedAt    DateTime?    @map("completed_at")
-  processingTime Int?         @map("processing_time") // milliseconds
-  workerId       String?      @map("worker_id")
-  createdAt      DateTime     @default(now()) @map("created_at")
-  updatedAt      DateTime     @updatedAt @map("updated_at")
+  id          String       @id @default(uuid())
+  title       String
+  description String?      @db.Text
+  status      TaskStatus   @default(PENDING)
+  priority    TaskPriority @default(NORMAL)
+  payload     Json?
+  result      Json?
+  error       String?      @db.Text
+  
+  attempts    Int          @default(0)
+  maxRetries  Int          @default(3)
+  
+  scheduledAt DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+  
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  workerId    String?
+  workerLogs  WorkerLog[]
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
-  // Relations
-  userId String @map("user_id")
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Indexes
-  @@index([status, priority])
-  @@index([userId, status])
+  @@index([status])
+  @@index([userId])
   @@index([scheduledAt])
-  @@index([createdAt])
   @@map("tasks")
 }
 
-model WorkerMetric {
-  id              String   @id @default(uuid())
-  workerId        String   @map("worker_id")
-  tasksProcessed  Int      @default(0) @map("tasks_processed")
-  tasksSucceeded  Int      @default(0) @map("tasks_succeeded")
-  tasksFailed     Int      @default(0) @map("tasks_failed")
-  averageTime     Float    @default(0) @map("average_time") // milliseconds
-  lastActiveAt    DateTime @map("last_active_at")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+model WorkerLog {
+  id        String   @id @default(uuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  workerId  String
+  message   String   @db.Text
+  level     String   @default("info")
+  createdAt DateTime @default(now())
 
-  @@index([workerId])
-  @@index([lastActiveAt])
-  @@map("worker_metrics")
+  @@index([taskId])
+  @@map("worker_logs")
 }
