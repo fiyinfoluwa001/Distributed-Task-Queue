@@ -1,7 +1,135 @@
 type User {
-    id: ID!
-    email: String!
-    name: String
-    role: UserRole!
-    createdAt: 
+  id: ID!
+  email: String!
+  name: String
+  role: UserRole!
+  createdAt: DateTime!
+  tasks: [Task!]!
+}
+
+type Task {
+  id: ID!
+  title: String!
+  description: String
+  status: TaskStatus!
+  priority: TaskPriority!
+  payload: JSON
+  result: JSON
+  error: String
+  attempts: Int!
+  maxRetries: Int!
+  scheduledAt: DateTime
+  startedAt: DateTime
+  completedAt: DateTime
+  userId: String!
+  user: User!
+  workerId: String
+  logs: [WorkerLog!]!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type WorkerLog {
+  id: ID!
+  taskId: String!
+  workerId: String!
+  message: String!
+  level: String!
+  createdAt: DateTime!
+}
+
+type AuthPayload {
+  accessToken: String!
+  user: User!
+}
+
+type TaskStats {
+  total: Int!
+  pending: Int!
+  processing: Int!
+  completed: Int!
+  failed: Int!
+}
+
+enum UserRole {
+  ADMIN
+  USER
+  WORKER
+}
+
+enum TaskStatus {
+  PENDING
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  NORMAL
+  HIGH
+  CRITICAL
+}
+
+scalar DateTime
+scalar JSON
+
+input CreateTaskInput {
+  title: String!
+  description: String
+  priority: TaskPriority
+  payload: JSON
+  scheduledAt: DateTime
+}
+
+input UpdateTaskInput {
+  title: String
+  description: String
+  status: TaskStatus
+  priority: TaskPriority
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+input RegisterInput {
+  email: String!
+  password: String!
+  name: String
+}
+
+type Query {
+  me: User!
+  task(id: ID!): Task
+  tasks(status: TaskStatus, limit: Int, offset: Int): [Task!]!
+  taskStats: TaskStats!
+  queueHealth: QueueHealth!
+}
+
+type Mutation {
+  register(input: RegisterInput!): AuthPayload!
+  login(input: LoginInput!): AuthPayload!
+
+  createTask(input: CreateTaskInput!): Task!
+  updateTask(id: ID!, input: UpdateTaskInput!): Task!
+  cancelTask(id: ID!): Task!
+  retryTask(id: ID!): Task!
+
+  processNextTask: Task
+}
+
+type Subscription {
+  taskUpdated(userId: String): Task!
+  taskCreated: Task!
+}
+
+type QueueHealth {
+  waiting: Int!
+  active: Int!
+  completed: Int!
+  failed: Int!
 }
