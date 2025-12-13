@@ -44,7 +44,7 @@ export class QueueService {
       lockKey,
       workerId,
       "EX",
-      300, // 5 minutes
+      300,
       "NX"
     );
     return result === "OK";

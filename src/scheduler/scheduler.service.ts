@@ -25,7 +25,7 @@ export class SchedulerService {
           not: null,
         },
       },
-      take: 50, // Process in batches
+      take: 50,
     });
 
     if (scheduledTasks.length === 0) {
@@ -51,7 +51,6 @@ export class SchedulerService {
     }
   }
 
-  // Clean up old completed tasks every day at 2 AM
   @Cron("0 2 * * *")
   async cleanupOldTasks() {
     this.logger.log("Running task cleanup...");

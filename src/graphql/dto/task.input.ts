@@ -7,7 +7,6 @@ import {
 } from "class-validator";
 import { TaskPriority, TaskStatus } from "../../generated/prisma/enums";
 
-// ✅ Plain class, no decorators
 export class CreateTaskInput {
   @IsString()
   title: string;
