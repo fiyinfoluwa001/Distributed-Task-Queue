@@ -11,6 +11,7 @@ import { QueueModule } from "./queue/queue.module";
 import { SchedulerModule } from "./scheduler/scheduler.module";
 import { MetricsModule } from "./metrics/metrics.module";
 import { WorkerService } from "./worker/worker.service";
+import { GraphqlModule } from "./graphql/grapgql.module";
 
 @Module({
   imports: [
@@ -19,13 +20,16 @@ import { WorkerService } from "./worker/worker.service";
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-      autoSchemaFile: join(process.cwd(), "src/schema.gql"),
-      sortSchema: true,
+      typePaths: ["./**/*.gql"],
       playground: true,
       subscriptions: {
         "graphql-ws": true,
       },
       context: ({ req }) => ({ req }),
+      definitions: {
+        path: join(process.cwd(), "src/graphql/graphql.ts"),
+        outputAs: "class",
+      },
     }),
     PrismaModule,
     AuthModule,
@@ -33,6 +37,7 @@ import { WorkerService } from "./worker/worker.service";
     QueueModule,
     SchedulerModule,
     MetricsModule,
+    GraphqlModule,
   ],
   providers: [WorkerService],
 })

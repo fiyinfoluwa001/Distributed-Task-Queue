@@ -2,7 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { PrismaService } from "../prisma/prisma.service";
 import { QueueService } from "../queue/queue.service";
-import { TaskStatus } from "@prisma/client";
+import { TaskStatus } from "../generated/prisma/enums";
 
 @Injectable()
 export class SchedulerService {
@@ -13,7 +13,6 @@ export class SchedulerService {
     private queueService: QueueService
   ) {}
 
-  // Run every minute to check for scheduled tasks
   @Cron(CronExpression.EVERY_MINUTE)
   async processScheduledTasks() {
     this.logger.log("Checking for scheduled tasks...");

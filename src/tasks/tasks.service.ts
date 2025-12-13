@@ -3,7 +3,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { QueueService } from "../queue/queue.service";
 import { MetricsService } from "../metrics/metrics.service";
 import { CreateTaskInput, UpdateTaskInput } from "../graphql/dto/task.input";
-import { TaskStatus } from "@prisma/client";
+import { TaskStatus } from "../generated/prisma/enums";
 
 @Injectable()
 export class TasksService {

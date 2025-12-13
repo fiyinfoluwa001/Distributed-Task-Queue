@@ -2,7 +2,7 @@ import { Processor, Process } from "@nestjs/bull";
 import { Job } from "bull";
 import { Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { TaskStatus } from "@prisma/client";
+import { TaskStatus } from "../generated/prisma/enums";
 import { QueueService } from "./queue.service";
 import { v4 as uuidv4 } from "uuid";
 

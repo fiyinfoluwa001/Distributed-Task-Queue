@@ -1,7 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { GqlExecutionContext } from "@nestjs/graphql";
-import { UserRole } from "@prisma/client";
+import { UserRole } from "../../generated/prisma/enums";
 
 @Injectable()
 export class RolesGuard implements CanActivate {

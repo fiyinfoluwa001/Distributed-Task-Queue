@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { QueueService } from "../queue/queue.service";
-import { TaskStatus } from "@prisma/client";
+import { TaskStatus } from "../generated/prisma/enums";
 
 @Injectable()
 export class WorkerService {

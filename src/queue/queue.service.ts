@@ -1,7 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { InjectQueue } from "@nestjs/bull";
 import { Queue } from "bull";
-import { Task, TaskPriority } from "@prisma/client";
+import { TaskPriority } from "../generated/prisma/enums";
+import { Task } from "../generated/prisma/client";
 import Redis from "ioredis";
 import { ConfigService } from "@nestjs/config";
 

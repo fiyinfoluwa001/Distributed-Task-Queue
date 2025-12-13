@@ -1,7 +1,7 @@
 import { Controller, Get } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { QueueService } from "../queue/queue.service";
-import { TaskStatus } from "@prisma/client";
+import { TaskStatus } from "../generated/prisma/enums";
 
 @Controller("health")
 export class MetricsController {
