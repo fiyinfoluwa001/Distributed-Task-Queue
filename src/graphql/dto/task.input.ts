@@ -1,50 +1,48 @@
-import { Field, InputType } from "@nestjs/graphql";
-import { IsString, IsOptional, IsEnum, IsDateString } from "class-validator";
-import { TaskPriority } from "@prisma/client";
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsDateString,
+  IsObject,
+} from "class-validator";
+import { TaskPriority, TaskStatus } from "../../generated/prisma/enums";
 
-@InputType()
+// ✅ Plain class, no decorators
 export class CreateTaskInput {
-  @Field()
   @IsString()
   title: string;
 
-  @Field({ nullable: true })
   @IsString()
   @IsOptional()
   description?: string;
 
-  @Field(() => String, { nullable: true })
   @IsEnum(TaskPriority)
   @IsOptional()
   priority?: TaskPriority;
 
-  @Field(() => String, { nullable: true })
+  @IsObject()
   @IsOptional()
   payload?: any;
 
-  @Field({ nullable: true })
   @IsDateString()
   @IsOptional()
   scheduledAt?: Date;
 }
 
-@InputType()
 export class UpdateTaskInput {
-  @Field({ nullable: true })
   @IsString()
   @IsOptional()
   title?: string;
 
-  @Field({ nullable: true })
   @IsString()
   @IsOptional()
   description?: string;
 
-  @Field(() => String, { nullable: true })
+  @IsEnum(TaskStatus)
   @IsOptional()
-  status?: string;
+  status?: TaskStatus;
 
-  @Field(() => String, { nullable: true })
+  @IsEnum(TaskPriority)
   @IsOptional()
   priority?: TaskPriority;
 }
