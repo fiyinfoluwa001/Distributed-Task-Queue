@@ -1,6 +1,25 @@
 version: "3.8"
 
 services:
+  app:
+    build: .
+    container_name: distributed-task-queue-app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "mysql://dtq:fiyinfoluwa@localhost:3306/dtq"
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET}
+      NODE_ENV: production
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - task-queue-network
+
+  services:
   mysql:
     image: mysql:8.0
     container_name: dtq-mysql
@@ -13,9 +32,9 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - mysql_data: /var/lib/mysql
+      - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["cmd", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -26,9 +45,10 @@ services:
     restart: always
     ports: -"6379:6379"
     volumes:
-      -redis_data: /data
+      - redis_data:/data
+    command: redis-server --appendonly yes
     healthcheck:
-      test: ["cmd", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -40,7 +60,7 @@ services:
       - "9090:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data: /prometheus
+      - prometheus_data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
@@ -51,7 +71,7 @@ services:
     ports:
       - "3001:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
     volumes:
       - grafana_data:/var/lib/grafana
     depends_on:

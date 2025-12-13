@@ -1,6 +1,7 @@
 import { Resolver, Query, Mutation, Args, Subscription } from "@nestjs/graphql";
 import { UseGuards } from "@nestjs/common";
-// import { PubSub } from "graphql-subscriptions";
+import { PubSub } from "graphql-subscriptions";
+import { PubSubService } from "../pubsub/pubsub.service";
 import { TasksService } from "./tasks.service";
 import { GqlAuthGuard } from "../auth/guards/gqlAuth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
@@ -9,17 +10,12 @@ import { CurrentUser } from "../auth/decorators/currentUser.decorator";
 import { CreateTaskInput, UpdateTaskInput } from "../graphql/dto/task.input";
 import { UserRole, TaskStatus } from "../generated/prisma/enums";
 
-// const pubSub = new PubSub();
-
 @Resolver("Task")
 export class TasksResolver {
-  constructor(private tasksService: TasksService) {}
-
-  @Query("task")
-  @UseGuards(GqlAuthGuard)
-  async task(@Args("id") id: string) {
-    return this.tasksService.getTask(id);
-  }
+  constructor(
+    private tasksService: TasksService,
+    private pubSubService: PubSubService
+  ) {}
 
   @Query("tasks")
   @UseGuards(GqlAuthGuard)
@@ -32,7 +28,7 @@ export class TasksResolver {
     return this.tasksService.getTasks(user.id, status, limit, offset);
   }
 
-  @Query("task")
+  @Query("taskStats")
   @UseGuards(GqlAuthGuard)
   async taskStats() {
     return this.tasksService.getTaskStats();
@@ -45,8 +41,9 @@ export class TasksResolver {
     @Args("input") input: CreateTaskInput
   ) {
     const task = await this.tasksService.createTask(user.id, input);
-    pubSub.publish("taskCreated", { taskCreated: task });
-    pubSub.publish("taskUpdated", { taskUpdated: task });
+    await this.pubSubService.publish("taskCreated", { taskCreated: task });
+    await this.pubSubService.publish("taskUpdated", { taskUpdated: task });
+
     return task;
   }
 
@@ -58,7 +55,7 @@ export class TasksResolver {
     @Args("input") input: UpdateTaskInput
   ) {
     const task = await this.tasksService.updateTask(id, input);
-    pubSub.publish("taskUpdated", { taskUpdated: task });
+    this.pubSubService.publish("taskUpdated", { taskUpdated: task });
     return task;
   }
 
@@ -66,7 +63,7 @@ export class TasksResolver {
   @UseGuards(GqlAuthGuard)
   async cancelTask(@Args("id") id: string) {
     const task = await this.tasksService.cancelTask(id);
-    pubSub.publish("taskUpdated", { taskUpdated: task });
+    this.pubSubService.publish("taskUpdated", { taskUpdated: task });
     return task;
   }
 
@@ -74,17 +71,17 @@ export class TasksResolver {
   @UseGuards(GqlAuthGuard)
   async retryTask(@Args("id") id: string) {
     const task = await this.tasksService.retryTask(id);
-    pubSub.publish("taskUpdated", { taskUpdated: task });
+    this.pubSubService.publish("taskUpdated", { taskUpdated: task });
     return task;
   }
 
-  @Subscription()
+  @Subscription("taskCreated")
   taskCreated() {
-    return pubSub.asyncIterator("taskCreated");
+    return this.pubSubService.asyncIterator("taskCreated");
   }
 
-  @Subscription()
+  @Subscription("taskUpdated")
   taskUpdated(@Args("userId", { nullable: true }) userId?: string) {
-    return pubSub.asyncIterator("taskUpdated");
+    return this.pubSubService.asyncIterator("taskUpdated");
   }
 }
