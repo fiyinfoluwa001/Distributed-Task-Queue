@@ -7,9 +7,9 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/main",
     "start:dev": "ts-node src/main.ts",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
+    "test": "jest --forceExit",
+    "test:watch": "jest --watch --forceExit",
+    "test:cov": "jest --coverage --forceExit",
     "test:e2e": "jest --config test/jest-e2e.json",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
@@ -51,7 +51,9 @@
       "^@/(.*)$": "<rootDir>/src/$1"
     },
     "testEnvironment": "node",
-    "transformIgnorePatterns": ["/node_modules/(?!uuid)"],
+    "transformIgnorePatterns": [
+      "/node_modules/(?!uuid)"
+    ],
     "collectCoverageFrom": [
       "src/**/*.ts",
       "!src/main.ts",
@@ -61,12 +63,16 @@
   },
   "dependencies": {
     "@apollo/server": "^5.2.0",
+    "@bull-board/api": "^9.4.0",
+    "@bull-board/express": "^9.4.0",
+    "@bull-board/nestjs": "^9.4.0",
     "@nestjs/apollo": "^13.2.1",
     "@nestjs/bullmq": "^11.0.5",
     "@nestjs/config": "^4.0.2",
     "@nestjs/graphql": "^13.2.0",
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/passport": "^11.0.5",
+    "@nestjs/platform-express": "^11.2.1",
     "@nestjs/schedule": "^6.0.1",
     "@prisma/client": "^7.1.0",
     "@types/uuid": "^10.0.0",
