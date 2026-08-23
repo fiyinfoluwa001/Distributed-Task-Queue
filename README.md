@@ -1,13 +1,5 @@
 # Distributed Task Queue System
 
-[![NestJS](https://img.shields.io/badge/NestJS-11.x-E0234E?logo=nestjs)](https://nestjs.com/)
-[![GraphQL](https://img.shields.io/badge/GraphQL-16.x-E10098?logo=graphql)](https://graphql.org/)
-[![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?logo=mysql)](https://www.mysql.com/)
-[![Redis](https://img.shields.io/badge/Redis-7.x-DC382D?logo=redis)](https://redis.io/)
-[![BullMQ](https://img.shields.io/badge/BullMQ-5.x-FF0000)](https://docs.bullmq.io/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript)](https://www.typescriptlang.org/)
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)](https://docs.docker.com/compose/)
-
 A distributed task queue system built with **NestJS + GraphQL + MySQL + Redis + BullMQ**. Tasks are submitted via a GraphQL API, persisted in MySQL, queued in Redis, and processed by workers with distributed locking, automatic retries, and real-time subscription updates.
 
 ---
@@ -51,8 +43,6 @@ Client (GraphQL)
 - Workers use a 300-second Redis lock per task to prevent duplicate processing across multiple instances.
 - Failed tasks auto-retry with exponential backoff up to `maxRetries`. Stuck tasks (processing > 15 min) are detected and reset every 10 minutes.
 - Real-time updates are pushed to subscribers via **Redis PubSub** (works correctly across multiple app instances).
-
----
 
 ## Quick Start
 
@@ -106,8 +96,8 @@ npm run start:dev
 
 The app starts on port **3000**:
 
-| Endpoint | URL |
-|---|---|
+| Endpoint           | URL                           |
+| ------------------ | ----------------------------- |
 | GraphQL Playground | http://localhost:3000/graphql |
 | Prometheus metrics | http://localhost:3000/metrics |
 
@@ -139,15 +129,15 @@ npm run prisma:push      # Sync schema directly without a migration file (dev on
 
 Copy `.env.example` to `.env`. All defaults match the Docker Compose setup so it works out of the box locally.
 
-| Variable | Default | Description |
-|---|---|---|
-| `PORT` | `3000` | HTTP port the app listens on |
-| `NODE_ENV` | `development` | `development` or `production` |
-| `DATABASE_URL` | `mysql://fiyinfoluwa:fiyinfoluwa@localhost:3306/distributed-task-queue` | Full MySQL connection string |
-| `REDIS_HOST` | `localhost` | Redis hostname |
-| `REDIS_PORT` | `6379` | Redis port |
-| `JWT_SECRET` | — | Secret used to sign JWTs. **Required.** Generate with `openssl rand -base64 32` |
-| `JWT_EXPIRATION` | `1d` | JWT TTL (e.g. `1d`, `12h`, `30m`) |
+| Variable         | Default                                                                 | Description                                                                     |
+| ---------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `PORT`           | `3000`                                                                  | HTTP port the app listens on                                                    |
+| `NODE_ENV`       | `development`                                                           | `development` or `production`                                                   |
+| `DATABASE_URL`   | `mysql://fiyinfoluwa:fiyinfoluwa@localhost:3306/distributed-task-queue` | Full MySQL connection string                                                    |
+| `REDIS_HOST`     | `localhost`                                                             | Redis hostname                                                                  |
+| `REDIS_PORT`     | `6379`                                                                  | Redis port                                                                      |
+| `JWT_SECRET`     | —                                                                       | Secret used to sign JWTs. **Required.** Generate with `openssl rand -base64 32` |
+| `JWT_EXPIRATION` | `1d`                                                                    | JWT TTL (e.g. `1d`, `12h`, `30m`)                                               |
 
 ---
 
@@ -172,11 +162,11 @@ npx prisma studio
 
 ### Models
 
-| Model | Description |
-|---|---|
-| `User` | Registered users. Roles: `ADMIN`, `USER`, `WORKER` |
-| `Task` | The core entity. Stores status, priority, payload (JSON), result (JSON), retry counts, timestamps |
-| `WorkerLog` | Audit log entries written by the processor for each task it handles |
+| Model       | Description                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------------------- |
+| `User`      | Registered users. Roles: `ADMIN`, `USER`, `WORKER`                                                |
+| `Task`      | The core entity. Stores status, priority, payload (JSON), result (JSON), retry counts, timestamps |
+| `WorkerLog` | Audit log entries written by the processor for each task it handles                               |
 
 ---
 
@@ -205,17 +195,17 @@ npx jest --testNamePattern="should set task status to FAILED"
 
 ### Test files
 
-| File | What it covers |
-|---|---|
-| `src/auth/auth.service.spec.ts` | Register, login, wrong password, user not found |
-| `src/auth/auth.resolver.spec.ts` | Resolver returns real objects (not JSON strings), correct arg forwarding |
-| `src/tasks/tasks.service.spec.ts` | Task creation, queue enqueue, metrics |
-| `src/tasks/tasks.resolver.spec.ts` | Mutations publish events, subscription userId filter |
-| `src/queue/queue.service.spec.ts` | Priority mapping, scheduling delay, Redis lock acquire/release, queue health |
-| `src/queue/task.processor.spec.ts` | Lock acquisition, PROCESSING/COMPLETED/FAILED status transitions, lock always released |
+| File                                      | What it covers                                                                          |
+| ----------------------------------------- | --------------------------------------------------------------------------------------- |
+| `src/auth/auth.service.spec.ts`           | Register, login, wrong password, user not found                                         |
+| `src/auth/auth.resolver.spec.ts`          | Resolver returns real objects (not JSON strings), correct arg forwarding                |
+| `src/tasks/tasks.service.spec.ts`         | Task creation, queue enqueue, metrics                                                   |
+| `src/tasks/tasks.resolver.spec.ts`        | Mutations publish events, subscription userId filter                                    |
+| `src/queue/queue.service.spec.ts`         | Priority mapping, scheduling delay, Redis lock acquire/release, queue health            |
+| `src/queue/task.processor.spec.ts`        | Lock acquisition, PROCESSING/COMPLETED/FAILED status transitions, lock always released  |
 | `src/scheduler/scheduler.service.spec.ts` | Scheduled task pickup, partial failure resilience, 30-day cleanup, stuck task detection |
-| `src/metrics/metrics.service.spec.ts` | Counter/gauge/histogram method delegation |
-| `src/pubsub/pubsub.service.spec.ts` | Uses RedisPubSub (not in-memory), publish/asyncIterator delegation |
+| `src/metrics/metrics.service.spec.ts`     | Counter/gauge/histogram method delegation                                               |
+| `src/pubsub/pubsub.service.spec.ts`       | Uses RedisPubSub (not in-memory), publish/asyncIterator delegation                      |
 
 ### E2E tests
 
@@ -228,195 +218,6 @@ docker compose -f infra/docker-compose.yml up -d mysql redis
 npm run test:e2e
 ```
 
----
-
-## GraphQL API
-
-Open the playground at **http://localhost:3000/graphql** to explore the schema interactively.
-
-For any mutation or query that requires authentication, add this HTTP header:
-
-```json
-{ "Authorization": "Bearer YOUR_JWT_TOKEN" }
-```
-
-For subscriptions (`taskCreated`, `taskUpdated`), the client must use the **`graphql-ws`** protocol (not the legacy `subscriptions-transport-ws`).
-
----
-
-### Authentication
-
-#### Register
-
-```graphql
-mutation {
-  register(input: {
-    email: "alice@example.com"
-    password: "password123"
-    name: "Alice"
-  }) {
-    accessToken
-    user { id email name role }
-  }
-}
-```
-
-#### Login
-
-```graphql
-mutation {
-  login(input: { email: "alice@example.com", password: "password123" }) {
-    accessToken
-    user { id email role }
-  }
-}
-```
-
-Copy the `accessToken` from the response and add it to the `Authorization` header for all subsequent requests.
-
----
-
-### Tasks
-
-#### Create a task (queued immediately)
-
-```graphql
-mutation {
-  createTask(input: {
-    title: "Process video"
-    description: "Convert to 720p and 1080p"
-    priority: HIGH
-    payload: { videoId: "abc123", formats: ["720p", "1080p"] }
-  }) {
-    id title status priority createdAt
-  }
-}
-```
-
-**Priority levels:** `LOW` | `NORMAL` | `HIGH` | `CRITICAL`
-
-#### Schedule a task for the future
-
-```graphql
-mutation {
-  createTask(input: {
-    title: "Send newsletter"
-    priority: NORMAL
-    scheduledAt: "2026-09-01T09:00:00Z"
-    payload: { listId: "weekly" }
-  }) {
-    id title status scheduledAt
-  }
-}
-```
-
-The task stays `PENDING` until the scheduler cron picks it up at or after `scheduledAt`.
-
-#### List tasks
-
-```graphql
-query {
-  tasks(status: PROCESSING, limit: 20, offset: 0) {
-    id title status priority attempts createdAt
-    user { email }
-  }
-}
-```
-
-`status` is optional. When provided, filter by: `PENDING` | `QUEUED` | `PROCESSING` | `COMPLETED` | `FAILED` | `CANCELLED`
-
-#### Get a single task with worker logs
-
-```graphql
-query {
-  task(id: "uuid-here") {
-    id title status priority
-    payload result error
-    attempts maxRetries
-    startedAt completedAt
-    logs { message level createdAt }
-  }
-}
-```
-
-#### Cancel a task
-
-```graphql
-mutation {
-  cancelTask(id: "uuid-here") { id status }
-}
-```
-
-Cannot cancel a task that is already `COMPLETED`.
-
-#### Retry a failed task
-
-```graphql
-mutation {
-  retryTask(id: "uuid-here") { id status attempts }
-}
-```
-
-Only works on `FAILED` tasks that haven't exceeded `maxRetries`.
-
-#### Update a task (admin only)
-
-```graphql
-mutation {
-  updateTask(id: "uuid-here", input: { title: "New title", priority: CRITICAL }) {
-    id title priority
-  }
-}
-```
-
-Requires the `ADMIN` role.
-
-#### Task statistics
-
-```graphql
-query {
-  taskStats { total pending processing completed failed }
-}
-```
-
-#### Queue health
-
-```graphql
-query {
-  queueHealth { waiting active completed failed }
-}
-```
-
----
-
-### Real-time Subscriptions
-
-Subscriptions require a WebSocket connection using the `graphql-ws` protocol. Most GraphQL clients (Apollo Client, graphql-ws library) support this.
-
-#### Subscribe to all new tasks
-
-```graphql
-subscription {
-  taskCreated {
-    id title status priority createdAt
-  }
-}
-```
-
-#### Subscribe to task status changes
-
-Omit `userId` to receive all updates (useful for admin dashboards). Pass `userId` to filter to a specific user's tasks only.
-
-```graphql
-subscription {
-  taskUpdated(userId: "user-uuid-here") {
-    id title status result error updatedAt
-  }
-}
-```
-
----
-
 ## Monitoring
 
 Start Prometheus and Grafana alongside the app:
@@ -425,21 +226,21 @@ Start Prometheus and Grafana alongside the app:
 docker compose -f infra/docker-compose.yml up -d prometheus grafana
 ```
 
-| Service | URL | Credentials |
-|---|---|---|
-| Prometheus | http://localhost:9090 | — |
-| Grafana | http://localhost:3001 | `admin` / `admin` |
+| Service    | URL                   | Credentials       |
+| ---------- | --------------------- | ----------------- |
+| Prometheus | http://localhost:9090 | —                 |
+| Grafana    | http://localhost:3001 | `admin` / `admin` |
 
 ### Prometheus metrics exposed at `/metrics`
 
-| Metric | Type | Description |
-|---|---|---|
-| `tasks_created_total` | Counter | Tasks created, labeled by `priority` |
-| `tasks_completed_total` | Counter | Tasks successfully completed |
-| `tasks_failed_total` | Counter | Tasks that failed |
-| `tasks_active` | Gauge | Tasks currently in `PROCESSING` state |
-| `queue_size` | Gauge | Current BullMQ queue depth |
-| `task_duration_seconds` | Histogram | End-to-end processing time |
+| Metric                  | Type      | Description                           |
+| ----------------------- | --------- | ------------------------------------- |
+| `tasks_created_total`   | Counter   | Tasks created, labeled by `priority`  |
+| `tasks_completed_total` | Counter   | Tasks successfully completed          |
+| `tasks_failed_total`    | Counter   | Tasks that failed                     |
+| `tasks_active`          | Gauge     | Tasks currently in `PROCESSING` state |
+| `queue_size`            | Gauge     | Current BullMQ queue depth            |
+| `task_duration_seconds` | Histogram | End-to-end processing time            |
 
 ### Sample PromQL queries
 
@@ -556,5 +357,3 @@ Or add it to a `.env` file in the project root (Docker Compose picks it up autom
 - Email: boluwatifehonour@gmail.com
 
 ---
-
-Made with ❤️ by [Fiyinfoluwa](https://github.com/fiyinfoluwa001)
