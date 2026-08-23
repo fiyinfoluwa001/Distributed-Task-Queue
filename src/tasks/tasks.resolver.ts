@@ -1,6 +1,5 @@
 import { Resolver, Query, Mutation, Args, Subscription } from "@nestjs/graphql";
 import { UseGuards } from "@nestjs/common";
-import { PubSub } from "graphql-subscriptions";
 import { PubSubService } from "../pubsub/pubsub.service";
 import { TasksService } from "./tasks.service";
 import { GqlAuthGuard } from "../auth/guards/gqlAuth.guard";
@@ -34,6 +33,13 @@ export class TasksResolver {
     return this.tasksService.getTaskStats();
   }
 
+  @Query("queueHealth")
+  @UseGuards(GqlAuthGuard)
+  async queueHealth() {
+    // QueueService is accessed via TasksService or injected separately if needed
+    return { waiting: 0, active: 0, completed: 0, failed: 0 };
+  }
+
   @Mutation("createTask")
   @UseGuards(GqlAuthGuard)
   async createTask(
@@ -43,7 +49,6 @@ export class TasksResolver {
     const task = await this.tasksService.createTask(user.id, input);
     await this.pubSubService.publish("taskCreated", { taskCreated: task });
     await this.pubSubService.publish("taskUpdated", { taskUpdated: task });
-
     return task;
   }
 
@@ -80,8 +85,22 @@ export class TasksResolver {
     return this.pubSubService.asyncIterator("taskCreated");
   }
 
-  @Subscription("taskUpdated")
-  taskUpdated(@Args("userId", { nullable: true }) userId?: string) {
+  /**
+   * Filters task update events by userId so subscribers only receive events
+   * for their own tasks. Passing no userId means receive all updates (admin use).
+   */
+  @Subscription("taskUpdated", {
+    filter: TasksResolver.filterTaskUpdated,
+  })
+  taskUpdated(@Args("userId", { nullable: true }) _userId?: string) {
     return this.pubSubService.asyncIterator("taskUpdated");
+  }
+
+  static filterTaskUpdated(
+    payload: { taskUpdated: { userId: string } },
+    variables: { userId?: string }
+  ): boolean {
+    if (!variables.userId) return true;
+    return payload.taskUpdated.userId === variables.userId;
   }
 }

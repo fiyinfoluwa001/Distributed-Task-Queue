@@ -10,7 +10,6 @@ import { TasksModule } from "./tasks/tasks.module";
 import { QueueModule } from "./queue/queue.module";
 import { SchedulerModule } from "./scheduler/scheduler.module";
 import { MetricsModule } from "./metrics/metrics.module";
-import { WorkerService } from "./worker/worker.service";
 import { GraphqlModule } from "./graphql/grapgql.module";
 
 @Module({
@@ -39,6 +38,6 @@ import { GraphqlModule } from "./graphql/grapgql.module";
     MetricsModule,
     GraphqlModule,
   ],
-  providers: [WorkerService],
+  providers: [],
 })
 export class AppModule {}

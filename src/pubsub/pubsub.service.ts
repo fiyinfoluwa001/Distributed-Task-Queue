@@ -1,5 +1,7 @@
-import { Injectable } from "@nestjs/common";
-import { PubSub } from "graphql-subscriptions";
+import { Injectable, OnModuleDestroy } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { RedisPubSub } from "graphql-redis-subscriptions";
+import Redis from "ioredis";
 
 export interface TaskCreatedPayload {
   taskCreated: any;
@@ -15,11 +17,24 @@ type PubSubEvents = {
 };
 
 @Injectable()
-export class PubSubService {
-  private pubSub: any;
+export class PubSubService implements OnModuleDestroy {
+  private pubSub: RedisPubSub;
+  private publisher: Redis;
+  private subscriber: Redis;
 
-  constructor() {
-    this.pubSub = new PubSub();
+  constructor(private configService: ConfigService) {
+    const options = {
+      host: this.configService.get("REDIS_HOST", "localhost"),
+      port: this.configService.get<number>("REDIS_PORT", 6379),
+    };
+
+    this.publisher = new Redis(options);
+    this.subscriber = new Redis(options);
+
+    this.pubSub = new RedisPubSub({
+      publisher: this.publisher,
+      subscriber: this.subscriber,
+    });
   }
 
   async publish<T extends keyof PubSubEvents>(
@@ -31,5 +46,9 @@ export class PubSubService {
 
   asyncIterator<T extends keyof PubSubEvents>(event: T | T[]) {
     return this.pubSub.asyncIterator(event as string | string[]);
+  }
+
+  async onModuleDestroy() {
+    await this.pubSub.close();
   }
 }

@@ -4,7 +4,16 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/main",
+    "start:dev": "ts-node src/main.ts",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:e2e": "jest --config test/jest-e2e.json",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:push": "prisma db push"
   },
   "repository": {
     "type": "git",
@@ -18,10 +27,42 @@
     "url": "https://github.com/fiyinfoluwa001/Distributed-Task-Queue/issues"
   },
   "homepage": "https://github.com/fiyinfoluwa001/Distributed-Task-Queue#readme",
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": ".",
+    "roots": [
+      "<rootDir>/src"
+    ],
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": [
+        "ts-jest",
+        {
+          "tsconfig": "tsconfig.json"
+        }
+      ]
+    },
+    "moduleNameMapper": {
+      "^@prisma/client$": "<rootDir>/src/generated/prisma",
+      "^@/(.*)$": "<rootDir>/src/$1"
+    },
+    "testEnvironment": "node",
+    "transformIgnorePatterns": ["/node_modules/(?!uuid)"],
+    "collectCoverageFrom": [
+      "src/**/*.ts",
+      "!src/main.ts",
+      "!src/generated/**"
+    ],
+    "coverageDirectory": "coverage"
+  },
   "dependencies": {
     "@apollo/server": "^5.2.0",
     "@nestjs/apollo": "^13.2.1",
-    "@nestjs/bull": "^11.0.4",
+    "@nestjs/bullmq": "^11.0.5",
     "@nestjs/config": "^4.0.2",
     "@nestjs/graphql": "^13.2.0",
     "@nestjs/jwt": "^11.0.2",

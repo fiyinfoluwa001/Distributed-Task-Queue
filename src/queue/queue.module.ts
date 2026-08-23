@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { BullModule } from "@nestjs/bull";
+import { BullModule } from "@nestjs/bullmq";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { QueueService } from "./queue.service";
 import { TaskProcessor } from "./task.processor";
@@ -8,17 +8,15 @@ import { TaskProcessor } from "./task.processor";
   imports: [
     BullModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        redis: {
-          host: configService.get("REDIS_HOST"),
-          port: configService.get("REDIS_PORT"),
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          host: configService.get("REDIS_HOST", "localhost"),
+          port: configService.get<number>("REDIS_PORT", 6379),
         },
       }),
       inject: [ConfigService],
     }),
-    BullModule.registerQueue({
-      name: "tasks",
-    }),
+    BullModule.registerQueue({ name: "tasks" }),
   ],
   providers: [QueueService, TaskProcessor],
   exports: [QueueService],

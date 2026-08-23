@@ -2,17 +2,31 @@ import { Module } from "@nestjs/common";
 import { PrometheusModule } from "@willsoto/nestjs-prometheus";
 import { MetricsService } from "./metrics.service";
 import { MetricsController } from "./metrics.controller";
+import {
+  taskCreatedCounter,
+  taskCompletedCounter,
+  taskFailedCounter,
+  activeTasksGauge,
+  queueSizeGauge,
+  taskDurationHistogram,
+} from "./metrics.service";
 
 @Module({
   imports: [
     PrometheusModule.register({
       path: "/metrics",
-      defaultMetrics: {
-        enabled: true,
-      },
+      defaultMetrics: { enabled: true },
     }),
   ],
-  providers: [MetricsService],
+  providers: [
+    MetricsService,
+    taskCreatedCounter,
+    taskCompletedCounter,
+    taskFailedCounter,
+    activeTasksGauge,
+    queueSizeGauge,
+    taskDurationHistogram,
+  ],
   controllers: [MetricsController],
   exports: [MetricsService],
 })

@@ -1,5 +1,5 @@
-import { Processor, Process } from "@nestjs/bull";
-import { Job } from "bull";
+import { Processor, WorkerHost } from "@nestjs/bullmq";
+import { Job } from "bullmq";
 import { Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { TaskStatus } from "../generated/prisma/enums";
@@ -7,28 +7,29 @@ import { QueueService } from "./queue.service";
 import { v4 as uuidv4 } from "uuid";
 
 @Processor("tasks")
-export class TaskProcessor {
+export class TaskProcessor extends WorkerHost {
   private readonly logger = new Logger(TaskProcessor.name);
   private readonly workerId = uuidv4();
 
   constructor(
     private prisma: PrismaService,
     private queueService: QueueService
-  ) {}
+  ) {
+    super();
+  }
 
-  @Process("process-task")
-  async handleTask(job: Job) {
+  async process(job: Job): Promise<any> {
+    if (job.name === "process-task") {
+      return this.handleTask(job);
+    }
+  }
+
+  private async handleTask(job: Job): Promise<any> {
     const { taskId } = job.data;
 
-    this.logger.log(
-      `Worker ${this.workerId} attempting to process task ${taskId}`
-    );
+    this.logger.log(`Worker ${this.workerId} attempting to process task ${taskId}`);
 
-    // Try to acquire distributed lock
-    const lockAcquired = await this.queueService.acquireLock(
-      taskId,
-      this.workerId
-    );
+    const lockAcquired = await this.queueService.acquireLock(taskId, this.workerId);
 
     if (!lockAcquired) {
       this.logger.warn(`Task ${taskId} is already being processed`);
@@ -36,7 +37,6 @@ export class TaskProcessor {
     }
 
     try {
-      // Update task status to PROCESSING
       const task = await this.prisma.task.update({
         where: { id: taskId },
         data: {
@@ -49,10 +49,8 @@ export class TaskProcessor {
 
       await this.logWorkerActivity(taskId, "Task processing started");
 
-      // Simulate task execution (replace with actual business logic)
       const result = await this.executeTask(task);
 
-      // Update task as completed
       await this.prisma.task.update({
         where: { id: taskId },
         data: {
@@ -64,6 +62,8 @@ export class TaskProcessor {
 
       await this.logWorkerActivity(taskId, "Task completed successfully");
       this.logger.log(`Task ${taskId} completed successfully`);
+
+      return result;
     } catch (error) {
       this.logger.error(`Task ${taskId} failed:`, error);
 
@@ -75,27 +75,18 @@ export class TaskProcessor {
         },
       });
 
-      await this.logWorkerActivity(
-        taskId,
-        `Task failed: ${error.message}`,
-        "error"
-      );
+      await this.logWorkerActivity(taskId, `Task failed: ${error.message}`, "error");
 
-      throw error; // Re-throw for Bull's retry mechanism
+      throw error;
     } finally {
-      // Release the lock
       await this.queueService.releaseLock(taskId, this.workerId);
     }
   }
 
   private async executeTask(task: any): Promise<any> {
-    // Implement your actual task logic here
-    // This is a simulation
-    const executionTime = Math.random() * 3000 + 1000; // 1-4 seconds
-
+    const executionTime = Math.random() * 3000 + 1000;
     await new Promise((resolve) => setTimeout(resolve, executionTime));
 
-    // Simulate occasional failures for testing
     if (Math.random() < 0.1) {
       throw new Error("Simulated task failure");
     }
@@ -108,18 +99,9 @@ export class TaskProcessor {
     };
   }
 
-  private async logWorkerActivity(
-    taskId: string,
-    message: string,
-    level = "info"
-  ) {
+  private async logWorkerActivity(taskId: string, message: string, level = "info") {
     await this.prisma.workerLog.create({
-      data: {
-        taskId,
-        workerId: this.workerId,
-        message,
-        level,
-      },
+      data: { taskId, workerId: this.workerId, message, level },
     });
   }
 }

@@ -3,32 +3,25 @@ import { UseGuards } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { GqlAuthGuard } from "./guards/gqlAuth.guard";
 import { CurrentUser } from "./decorators/currentUser.decorator";
+import { LoginInput, RegisterInput } from "../graphql/dto/auth.input";
 
 @Resolver()
 export class AuthResolver {
   constructor(private authService: AuthService) {}
 
-  @Mutation(() => String)
-  async register(
-    @Args("input") input: { email: string; password: string; name?: string }
-  ) {
-    const result = await this.authService.register(
-      input.email,
-      input.password,
-      input.name
-    );
-    return JSON.stringify(result);
+  @Mutation("register")
+  async register(@Args("input") input: RegisterInput) {
+    return this.authService.register(input.email, input.password, input.name);
   }
 
-  @Mutation(() => String)
-  async login(@Args("input") input: { email: string; password: string }) {
-    const result = await this.authService.login(input.email, input.password);
-    return JSON.stringify(result);
+  @Mutation("login")
+  async login(@Args("input") input: LoginInput) {
+    return this.authService.login(input.email, input.password);
   }
 
-  @Query(() => String)
+  @Query("me")
   @UseGuards(GqlAuthGuard)
   async me(@CurrentUser() user: any) {
-    return JSON.stringify(user);
+    return user;
   }
 }

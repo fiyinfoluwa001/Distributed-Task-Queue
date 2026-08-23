@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
-import { InjectQueue } from "@nestjs/bull";
-import { Queue } from "bull";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
 import { TaskPriority } from "../generated/prisma/enums";
 import { Task } from "../generated/prisma/client";
 import Redis from "ioredis";
@@ -15,8 +15,8 @@ export class QueueService {
     private configService: ConfigService
   ) {
     this.redisClient = new Redis({
-      host: this.configService.get("REDIS_HOST"),
-      port: this.configService.get("REDIS_PORT"),
+      host: this.configService.get("REDIS_HOST", "localhost"),
+      port: this.configService.get<number>("REDIS_PORT", 6379),
     });
   }
 
@@ -40,20 +40,13 @@ export class QueueService {
 
   async acquireLock(taskId: string, workerId: string): Promise<boolean> {
     const lockKey = `task:lock:${taskId}`;
-    const result = await this.redisClient.set(
-      lockKey,
-      workerId,
-      "EX",
-      300,
-      "NX"
-    );
+    const result = await this.redisClient.set(lockKey, workerId, "EX", 300, "NX");
     return result === "OK";
   }
 
   async releaseLock(taskId: string, workerId: string): Promise<void> {
     const lockKey = `task:lock:${taskId}`;
     const currentOwner = await this.redisClient.get(lockKey);
-
     if (currentOwner === workerId) {
       await this.redisClient.del(lockKey);
     }
@@ -69,12 +62,12 @@ export class QueueService {
   }
 
   private getPriorityValue(priority: TaskPriority): number {
-    const priorityMap = {
+    const priorityMap: Record<TaskPriority, number> = {
       [TaskPriority.CRITICAL]: 1,
       [TaskPriority.HIGH]: 2,
       [TaskPriority.NORMAL]: 3,
       [TaskPriority.LOW]: 4,
     };
-    return priorityMap[priority] || 3;
+    return priorityMap[priority] ?? 3;
   }
 }
