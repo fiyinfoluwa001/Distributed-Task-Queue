@@ -2,8 +2,6 @@
 
 A distributed task queue system built with **NestJS + GraphQL + MySQL + Redis + BullMQ**. Tasks are submitted via a GraphQL API, persisted in MySQL, queued in Redis, and processed by workers with distributed locking, automatic retries, and real-time subscription updates.
 
----
-
 ## Table of Contents
 
 - [How It Works](#how-it-works)
@@ -16,8 +14,6 @@ A distributed task queue system built with **NestJS + GraphQL + MySQL + Redis + 
 - [Monitoring](#monitoring)
 - [Docker Deployment](#docker-deployment)
 - [Project Structure](#project-structure)
-
----
 
 ## How It Works
 
@@ -101,8 +97,6 @@ The app starts on port **3000**:
 | GraphQL Playground | http://localhost:3000/graphql |
 | Prometheus metrics | http://localhost:3000/metrics |
 
----
-
 ## Available Scripts
 
 ```bash
@@ -122,24 +116,6 @@ npm run prisma:generate  # Regenerate the Prisma client after schema changes
 npm run prisma:migrate   # Create and apply a new migration (dev)
 npm run prisma:push      # Sync schema directly without a migration file (dev only)
 ```
-
----
-
-## Environment Variables
-
-Copy `.env.example` to `.env`. All defaults match the Docker Compose setup so it works out of the box locally.
-
-| Variable         | Default                                                                 | Description                                                                     |
-| ---------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `PORT`           | `3000`                                                                  | HTTP port the app listens on                                                    |
-| `NODE_ENV`       | `development`                                                           | `development` or `production`                                                   |
-| `DATABASE_URL`   | `mysql://fiyinfoluwa:fiyinfoluwa@localhost:3306/distributed-task-queue` | Full MySQL connection string                                                    |
-| `REDIS_HOST`     | `localhost`                                                             | Redis hostname                                                                  |
-| `REDIS_PORT`     | `6379`                                                                  | Redis port                                                                      |
-| `JWT_SECRET`     | —                                                                       | Secret used to sign JWTs. **Required.** Generate with `openssl rand -base64 32` |
-| `JWT_EXPIRATION` | `1d`                                                                    | JWT TTL (e.g. `1d`, `12h`, `30m`)                                               |
-
----
 
 ## Database
 
@@ -167,8 +143,6 @@ npx prisma studio
 | `User`      | Registered users. Roles: `ADMIN`, `USER`, `WORKER`                                                |
 | `Task`      | The core entity. Stores status, priority, payload (JSON), result (JSON), retry counts, timestamps |
 | `WorkerLog` | Audit log entries written by the processor for each task it handles                               |
-
----
 
 ## Testing
 
@@ -255,8 +229,6 @@ rate(tasks_completed_total[5m]) / rate(tasks_created_total[5m])
 rate(task_duration_seconds_sum[5m]) / rate(task_duration_seconds_count[5m])
 ```
 
----
-
 ## Docker Deployment
 
 The Docker Compose file is in `infra/`. All services share a private `dtq-network`.
@@ -305,8 +277,6 @@ JWT_SECRET=$(openssl rand -base64 32) docker compose -f infra/docker-compose.yml
 
 Or add it to a `.env` file in the project root (Docker Compose picks it up automatically).
 
----
-
 ## Project Structure
 
 ```
@@ -339,8 +309,6 @@ Or add it to a `.env` file in the project root (Docker Compose picks it up autom
 - `SchedulerService` → `PrismaService` + `QueueService` (cron-driven task dispatch)
 - `PubSubService` wraps `RedisPubSub` — both `TasksResolver` (publishes) and subscription methods (subscribes) use it
 
----
-
 ## Contributing
 
 1. Fork the repository
@@ -349,11 +317,7 @@ Or add it to a `.env` file in the project root (Docker Compose picks it up autom
 4. Verify everything passes: `npm test`
 5. Open a pull request
 
----
-
 ## Contact
 
 - GitHub Issues: https://github.com/fiyinfoluwa001/Distributed-Task-Queue/issues
 - Email: boluwatifehonour@gmail.com
-
----
