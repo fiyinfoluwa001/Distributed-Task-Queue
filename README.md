@@ -95,6 +95,7 @@ The app starts on port **3000**:
 | Endpoint           | URL                           |
 | ------------------ | ----------------------------- |
 | GraphQL Playground | http://localhost:3000/graphql |
+| Bull Board (queue UI) | http://localhost:3000/queues |
 | Prometheus metrics | http://localhost:3000/metrics |
 
 ## Available Scripts
