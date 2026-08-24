@@ -4,6 +4,7 @@ import { Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { TaskStatus } from "../generated/prisma/enums";
 import { QueueService } from "./queue.service";
+import { PubSubService } from "../pubsub/pubsub.service";
 import { v4 as uuidv4 } from "uuid";
 
 @Processor("tasks")
@@ -13,7 +14,8 @@ export class TaskProcessor extends WorkerHost {
 
   constructor(
     private prisma: PrismaService,
-    private queueService: QueueService
+    private queueService: QueueService,
+    private pubSubService: PubSubService
   ) {
     super();
   }
@@ -27,9 +29,14 @@ export class TaskProcessor extends WorkerHost {
   private async handleTask(job: Job): Promise<any> {
     const { taskId } = job.data;
 
-    this.logger.log(`Worker ${this.workerId} attempting to process task ${taskId}`);
+    this.logger.log(
+      `Worker ${this.workerId} attempting to process task ${taskId}`
+    );
 
-    const lockAcquired = await this.queueService.acquireLock(taskId, this.workerId);
+    const lockAcquired = await this.queueService.acquireLock(
+      taskId,
+      this.workerId
+    );
 
     if (!lockAcquired) {
       this.logger.warn(`Task ${taskId} is already being processed`);
@@ -49,7 +56,7 @@ export class TaskProcessor extends WorkerHost {
 
       await this.logWorkerActivity(taskId, "Task processing started");
 
-      const result = await this.executeTask(task);
+      const result = await this.executeTask(task, job);
 
       await this.prisma.task.update({
         where: { id: taskId },
@@ -75,7 +82,11 @@ export class TaskProcessor extends WorkerHost {
         },
       });
 
-      await this.logWorkerActivity(taskId, `Task failed: ${error.message}`, "error");
+      await this.logWorkerActivity(
+        taskId,
+        `Task failed: ${error.message}`,
+        "error"
+      );
 
       throw error;
     } finally {
@@ -83,13 +94,31 @@ export class TaskProcessor extends WorkerHost {
     }
   }
 
-  private async executeTask(task: any): Promise<any> {
+  private async executeTask(task: any, job: Job): Promise<any> {
     const executionTime = Math.random() * 3000 + 1000;
-    await new Promise((resolve) => setTimeout(resolve, executionTime));
+    const phase = executionTime / 3;
+
+    await job.updateProgress(10);
+    await this.updateProgress(task.id, 10);
+
+    await new Promise((resolve) => setTimeout(resolve, phase));
+
+    await job.updateProgress(50);
+    await this.updateProgress(task.id, 50);
+
+    await new Promise((resolve) => setTimeout(resolve, phase));
+
+    await job.updateProgress(90);
+    await this.updateProgress(task.id, 90);
+
+    await new Promise((resolve) => setTimeout(resolve, phase));
 
     if (Math.random() < 0.1) {
       throw new Error("Simulated task failure");
     }
+
+    await job.updateProgress(100);
+    await this.updateProgress(task.id, 100);
 
     return {
       processedAt: new Date().toISOString(),
@@ -99,7 +128,19 @@ export class TaskProcessor extends WorkerHost {
     };
   }
 
-  private async logWorkerActivity(taskId: string, message: string, level = "info") {
+  private async updateProgress(taskId: string, progress: number): Promise<void> {
+    const task = await this.prisma.task.update({
+      where: { id: taskId },
+      data: { progress },
+    });
+    await this.pubSubService.publish("taskUpdated", { taskUpdated: task });
+  }
+
+  private async logWorkerActivity(
+    taskId: string,
+    message: string,
+    level = "info"
+  ) {
     await this.prisma.workerLog.create({
       data: { taskId, workerId: this.workerId, message, level },
     });

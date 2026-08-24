@@ -33,7 +33,7 @@ Client (GraphQL)
                                    releases lock)
 ```
 
-**Task lifecycle:** `PENDING` → `QUEUED` → `PROCESSING` → `COMPLETED` / `FAILED`
+**Task lifecycle:** `PENDING` → `QUEUED` → `PROCESSING` (progress 0→100) → `COMPLETED` / `FAILED`
 
 - A task created with a future `scheduledAt` stays `PENDING` until the `SchedulerService` cron picks it up every minute.
 - Workers use a 300-second Redis lock per task to prevent duplicate processing across multiple instances.
@@ -142,7 +142,7 @@ npx prisma studio
 | Model       | Description                                                                                       |
 | ----------- | ------------------------------------------------------------------------------------------------- |
 | `User`      | Registered users. Roles: `ADMIN`, `USER`, `WORKER`                                                |
-| `Task`      | The core entity. Stores status, priority, payload (JSON), result (JSON), retry counts, timestamps |
+| `Task`      | The core entity. Stores status, priority, payload (JSON), result (JSON), progress (0-100), retry counts, timestamps |
 | `WorkerLog` | Audit log entries written by the processor for each task it handles                               |
 
 ## Testing
@@ -150,7 +150,7 @@ npx prisma studio
 Tests are written with **Jest + ts-jest** using a TDD approach. All external dependencies (Prisma, Redis, BullMQ) are mocked in unit tests — you do not need a running database or Redis to run `npm test`.
 
 ```bash
-npm test                  # Run all unit tests (49 tests across 9 suites)
+npm test                  # Run all unit tests (53 tests across 9 suites)
 npm run test:watch        # Watch mode
 npm run test:cov          # Generate HTML coverage report in ./coverage
 ```
