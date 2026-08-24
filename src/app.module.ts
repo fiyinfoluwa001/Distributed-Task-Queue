@@ -12,6 +12,7 @@ import { SchedulerModule } from "./scheduler/scheduler.module";
 import { MetricsModule } from "./metrics/metrics.module";
 import { GraphqlModule } from "./graphql/grapgql.module";
 import { PubSubModule } from "./pubsub/pubsub.module";
+import { BullBoardModule } from "./bull-board/bull-board.module";
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { PubSubModule } from "./pubsub/pubsub.module";
     AuthModule,
     TasksModule,
     QueueModule,
+    BullBoardModule,
     SchedulerModule,
     MetricsModule,
     PubSubModule,

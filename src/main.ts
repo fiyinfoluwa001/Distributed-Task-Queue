@@ -24,10 +24,10 @@ async function bootstrap() {
 
   await app.listen(port);
 
-  console.log(`🚀 Application is running on: http://localhost:${port}`);
-  console.log(`📊 GraphQL Playground: http://localhost:${port}/graphql`);
-  console.log(`📈 Metrics: http://localhost:${port}/metrics`);
-  console.log(`❤️  Health Check: http://localhost:${port}/health`);
+  console.log(`Application is running on: http://localhost:${port}`);
+  console.log(`GraphQL Playground:        http://localhost:${port}/graphql`);
+  console.log(`Bull Board (queue UI):     http://localhost:${port}/queues`);
+  console.log(`Prometheus metrics:        http://localhost:${port}/metrics`);
 }
 
 bootstrap();
