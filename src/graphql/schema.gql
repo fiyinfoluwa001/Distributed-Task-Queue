@@ -16,6 +16,7 @@ type Task {
   payload: JSON
   result: JSON
   error: String
+  progress: Int!
   attempts: Int!
   maxRetries: Int!
   scheduledAt: DateTime

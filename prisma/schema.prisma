@@ -57,6 +57,7 @@ model Task {
   result      Json?
   error       String?      @db.Text
   
+  progress    Int          @default(0)
   attempts    Int          @default(0)
   maxRetries  Int          @default(3)
   

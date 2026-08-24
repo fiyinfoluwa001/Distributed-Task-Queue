@@ -11,6 +11,7 @@ import { QueueModule } from "./queue/queue.module";
 import { SchedulerModule } from "./scheduler/scheduler.module";
 import { MetricsModule } from "./metrics/metrics.module";
 import { GraphqlModule } from "./graphql/grapgql.module";
+import { PubSubModule } from "./pubsub/pubsub.module";
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { GraphqlModule } from "./graphql/grapgql.module";
     QueueModule,
     SchedulerModule,
     MetricsModule,
+    PubSubModule,
     GraphqlModule,
   ],
   providers: [],
