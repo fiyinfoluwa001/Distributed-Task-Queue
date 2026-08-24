@@ -92,11 +92,11 @@ npm run start:dev
 
 The app starts on port **3000**:
 
-| Endpoint           | URL                           |
-| ------------------ | ----------------------------- |
-| GraphQL Playground | http://localhost:3000/graphql |
-| Bull Board (queue UI) | http://localhost:3000/queues |
-| Prometheus metrics | http://localhost:3000/metrics |
+| Endpoint              | URL                           |
+| --------------------- | ----------------------------- |
+| GraphQL Playground    | http://localhost:3000/graphql |
+| Bull Board (queue UI) | http://localhost:3000/queues  |
+| Prometheus metrics    | http://localhost:3000/metrics |
 
 ## Available Scripts
 
@@ -139,11 +139,11 @@ npx prisma studio
 
 ### Models
 
-| Model       | Description                                                                                       |
-| ----------- | ------------------------------------------------------------------------------------------------- |
-| `User`      | Registered users. Roles: `ADMIN`, `USER`, `WORKER`                                                |
+| Model       | Description                                                                                                         |
+| ----------- | ------------------------------------------------------------------------------------------------------------------- |
+| `User`      | Registered users. Roles: `ADMIN`, `USER`, `WORKER`                                                                  |
 | `Task`      | The core entity. Stores status, priority, payload (JSON), result (JSON), progress (0-100), retry counts, timestamps |
-| `WorkerLog` | Audit log entries written by the processor for each task it handles                               |
+| `WorkerLog` | Audit log entries written by the processor for each task it handles                                                 |
 
 ## Testing
 
@@ -166,68 +166,6 @@ npx jest src/queue/task.processor.spec.ts
 
 ```bash
 npx jest --testNamePattern="should set task status to FAILED"
-```
-
-### Test files
-
-| File                                      | What it covers                                                                          |
-| ----------------------------------------- | --------------------------------------------------------------------------------------- |
-| `src/auth/auth.service.spec.ts`           | Register, login, wrong password, user not found                                         |
-| `src/auth/auth.resolver.spec.ts`          | Resolver returns real objects (not JSON strings), correct arg forwarding                |
-| `src/tasks/tasks.service.spec.ts`         | Task creation, queue enqueue, metrics                                                   |
-| `src/tasks/tasks.resolver.spec.ts`        | Mutations publish events, subscription userId filter                                    |
-| `src/queue/queue.service.spec.ts`         | Priority mapping, scheduling delay, Redis lock acquire/release, queue health            |
-| `src/queue/task.processor.spec.ts`        | Lock acquisition, PROCESSING/COMPLETED/FAILED status transitions, lock always released  |
-| `src/scheduler/scheduler.service.spec.ts` | Scheduled task pickup, partial failure resilience, 30-day cleanup, stuck task detection |
-| `src/metrics/metrics.service.spec.ts`     | Counter/gauge/histogram method delegation                                               |
-| `src/pubsub/pubsub.service.spec.ts`       | Uses RedisPubSub (not in-memory), publish/asyncIterator delegation                      |
-
-### E2E tests
-
-E2E tests in `test/tasks.e2eSpec.ts` hit the real GraphQL endpoint and require MySQL + Redis to be running.
-
-```bash
-# Make sure infrastructure is up first:
-docker compose -f infra/docker-compose.yml up -d mysql redis
-
-npm run test:e2e
-```
-
-## Monitoring
-
-Start Prometheus and Grafana alongside the app:
-
-```bash
-docker compose -f infra/docker-compose.yml up -d prometheus grafana
-```
-
-| Service    | URL                   | Credentials       |
-| ---------- | --------------------- | ----------------- |
-| Prometheus | http://localhost:9090 | —                 |
-| Grafana    | http://localhost:3001 | `admin` / `admin` |
-
-### Prometheus metrics exposed at `/metrics`
-
-| Metric                  | Type      | Description                           |
-| ----------------------- | --------- | ------------------------------------- |
-| `tasks_created_total`   | Counter   | Tasks created, labeled by `priority`  |
-| `tasks_completed_total` | Counter   | Tasks successfully completed          |
-| `tasks_failed_total`    | Counter   | Tasks that failed                     |
-| `tasks_active`          | Gauge     | Tasks currently in `PROCESSING` state |
-| `queue_size`            | Gauge     | Current BullMQ queue depth            |
-| `task_duration_seconds` | Histogram | End-to-end processing time            |
-
-### Sample PromQL queries
-
-```promql
-# Task creation rate by priority
-rate(tasks_created_total[5m])
-
-# Success rate over the last 5 minutes
-rate(tasks_completed_total[5m]) / rate(tasks_created_total[5m])
-
-# Average processing duration
-rate(task_duration_seconds_sum[5m]) / rate(task_duration_seconds_count[5m])
 ```
 
 ## Docker Deployment
