@@ -142,7 +142,7 @@ npx prisma studio
 | Model       | Description                                                                                                         |
 | ----------- | ------------------------------------------------------------------------------------------------------------------- |
 | `User`      | Registered users. Roles: `ADMIN`, `USER`, `WORKER`                                                                  |
-| `Task`      | The core entity. Stores status, priority, payload (JSON), result (JSON), progress (0-100), retry counts, timestamps |
+| `Task`      | The core entity. Stores status, priority, payload (JSON), result (JSON), progress (0-100), webhookUrl, notifyEmail, retry counts, timestamps |
 | `WorkerLog` | Audit log entries written by the processor for each task it handles                                                 |
 
 ## Testing
@@ -150,7 +150,7 @@ npx prisma studio
 Tests are written with **Jest + ts-jest** using a TDD approach. All external dependencies (Prisma, Redis, BullMQ) are mocked in unit tests — you do not need a running database or Redis to run `npm test`.
 
 ```bash
-npm test                  # Run all unit tests (53 tests across 9 suites)
+npm test                  # Run all unit tests (68 tests across 11 suites)
 npm run test:watch        # Watch mode
 npm run test:cov          # Generate HTML coverage report in ./coverage
 ```
@@ -167,6 +167,30 @@ npx jest src/queue/task.processor.spec.ts
 ```bash
 npx jest --testNamePattern="should set task status to FAILED"
 ```
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and fill in the values. Required vars:
+
+| Variable | Description | Default |
+|---|---|---|
+| `DATABASE_URL` | MySQL connection string | see `.env.example` |
+| `REDIS_HOST` | Redis host | `localhost` |
+| `REDIS_PORT` | Redis port | `6379` |
+| `JWT_SECRET` | Secret for signing JWTs — **change in production** | — |
+| `PORT` | HTTP port the app listens on | `3000` |
+
+Optional vars for email notifications (leave blank to disable):
+
+| Variable | Description | Default |
+|---|---|---|
+| `SMTP_HOST` | SMTP server hostname | — |
+| `SMTP_PORT` | SMTP port | `587` |
+| `SMTP_USER` | SMTP auth username | — |
+| `SMTP_PASS` | SMTP auth password | — |
+| `SMTP_FROM` | From address for notification emails | `noreply@dtq.app` |
+
+Any task created with a `notifyEmail` will receive a completion or failure email if SMTP is configured. Tasks created with a `webhookUrl` receive an HTTP POST regardless of SMTP.
 
 ## Docker Deployment
 

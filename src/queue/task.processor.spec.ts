@@ -3,6 +3,7 @@ import { TaskProcessor } from "./task.processor";
 import { PrismaService } from "../prisma/prisma.service";
 import { QueueService } from "./queue.service";
 import { PubSubService } from "../pubsub/pubsub.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { TaskStatus } from "../generated/prisma/enums";
 import { Job } from "bullmq";
 
@@ -24,6 +25,11 @@ const mockPubSubService = {
   publish: jest.fn(),
 };
 
+const mockNotificationsService = {
+  notifyTaskCompleted: jest.fn(),
+  notifyTaskFailed: jest.fn(),
+};
+
 function makeJob(name: string, data: Record<string, any>): Job {
   return {
     name,
@@ -42,6 +48,7 @@ describe("TaskProcessor", () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: QueueService, useValue: mockQueueService },
         { provide: PubSubService, useValue: mockPubSubService },
+        { provide: NotificationsService, useValue: mockNotificationsService },
       ],
     }).compile();
 
@@ -58,6 +65,8 @@ describe("TaskProcessor", () => {
     });
     mockPrisma.workerLog.create.mockResolvedValue({});
     mockPubSubService.publish.mockResolvedValue(undefined);
+    mockNotificationsService.notifyTaskCompleted.mockResolvedValue(undefined);
+    mockNotificationsService.notifyTaskFailed.mockResolvedValue(undefined);
   });
 
   describe("process", () => {
@@ -238,6 +247,52 @@ describe("TaskProcessor", () => {
       expect(updateProgressSpy).toHaveBeenCalledWith("task-1", 50);
       expect(updateProgressSpy).toHaveBeenCalledWith("task-1", 90);
       expect(updateProgressSpy).toHaveBeenCalledWith("task-1", 100);
+    });
+  });
+
+  describe("notifications", () => {
+    it("should call notifyTaskCompleted with the completed task on success", async () => {
+      jest
+        .spyOn(processor as any, "executeTask")
+        .mockResolvedValue({ done: true });
+
+      await (processor as any).handleTask(
+        makeJob("process-task", { taskId: "task-1" })
+      );
+
+      expect(
+        mockNotificationsService.notifyTaskCompleted
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "task-1" })
+      );
+    });
+
+    it("should call notifyTaskFailed with the failed task when executeTask throws", async () => {
+      jest
+        .spyOn(processor as any, "executeTask")
+        .mockRejectedValue(new Error("exploded"));
+
+      await expect(
+        (processor as any).handleTask(
+          makeJob("process-task", { taskId: "task-1" })
+        )
+      ).rejects.toThrow();
+
+      expect(mockNotificationsService.notifyTaskFailed).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "task-1" })
+      );
+    });
+
+    it("should not call notifyTaskCompleted when lock cannot be acquired", async () => {
+      mockQueueService.acquireLock.mockResolvedValue(false);
+
+      await (processor as any).handleTask(
+        makeJob("process-task", { taskId: "task-1" })
+      );
+
+      expect(
+        mockNotificationsService.notifyTaskCompleted
+      ).not.toHaveBeenCalled();
     });
   });
 });

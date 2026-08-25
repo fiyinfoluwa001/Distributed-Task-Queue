@@ -5,6 +5,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { TaskStatus } from "../generated/prisma/enums";
 import { QueueService } from "./queue.service";
 import { PubSubService } from "../pubsub/pubsub.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { v4 as uuidv4 } from "uuid";
 
 @Processor("tasks")
@@ -15,7 +16,8 @@ export class TaskProcessor extends WorkerHost {
   constructor(
     private prisma: PrismaService,
     private queueService: QueueService,
-    private pubSubService: PubSubService
+    private pubSubService: PubSubService,
+    private notificationsService: NotificationsService
   ) {
     super();
   }
@@ -58,7 +60,7 @@ export class TaskProcessor extends WorkerHost {
 
       const result = await this.executeTask(task, job);
 
-      await this.prisma.task.update({
+      const completedTask = await this.prisma.task.update({
         where: { id: taskId },
         data: {
           status: TaskStatus.COMPLETED,
@@ -70,11 +72,13 @@ export class TaskProcessor extends WorkerHost {
       await this.logWorkerActivity(taskId, "Task completed successfully");
       this.logger.log(`Task ${taskId} completed successfully`);
 
+      await this.notificationsService.notifyTaskCompleted(completedTask);
+
       return result;
     } catch (error) {
       this.logger.error(`Task ${taskId} failed:`, error);
 
-      await this.prisma.task.update({
+      const failedTask = await this.prisma.task.update({
         where: { id: taskId },
         data: {
           status: TaskStatus.FAILED,
@@ -87,6 +91,8 @@ export class TaskProcessor extends WorkerHost {
         `Task failed: ${error.message}`,
         "error"
       );
+
+      await this.notificationsService.notifyTaskFailed(failedTask);
 
       throw error;
     } finally {

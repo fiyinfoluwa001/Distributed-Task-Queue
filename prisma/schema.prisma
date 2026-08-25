@@ -65,6 +65,9 @@ model Task {
   startedAt   DateTime?
   completedAt DateTime?
   
+  webhookUrl  String?
+  notifyEmail String?
+
   userId      String
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   

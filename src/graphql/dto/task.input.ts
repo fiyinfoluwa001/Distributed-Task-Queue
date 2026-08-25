@@ -26,6 +26,14 @@ export class CreateTaskInput {
   @IsDateString()
   @IsOptional()
   scheduledAt?: Date;
+
+  @IsString()
+  @IsOptional()
+  webhookUrl?: string;
+
+  @IsString()
+  @IsOptional()
+  notifyEmail?: string;
 }
 
 export class UpdateTaskInput {
