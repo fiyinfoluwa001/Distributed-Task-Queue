@@ -13,6 +13,7 @@ import { MetricsModule } from "./metrics/metrics.module";
 import { GraphqlModule } from "./graphql/grapgql.module";
 import { PubSubModule } from "./pubsub/pubsub.module";
 import { BullBoardModule } from "./bull-board/bull-board.module";
+import { NotificationsModule } from "./notifications/notifications.module";
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { BullBoardModule } from "./bull-board/bull-board.module";
     SchedulerModule,
     MetricsModule,
     PubSubModule,
+    NotificationsModule,
     GraphqlModule,
   ],
   providers: [],

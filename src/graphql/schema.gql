@@ -22,6 +22,8 @@ type Task {
   scheduledAt: DateTime
   startedAt: DateTime
   completedAt: DateTime
+  webhookUrl: String
+  notifyEmail: String
   userId: String!
   user: User!
   workerId: String
@@ -83,6 +85,8 @@ input CreateTaskInput {
   priority: TaskPriority
   payload: JSON
   scheduledAt: DateTime
+  webhookUrl: String
+  notifyEmail: String
 }
 
 input UpdateTaskInput {

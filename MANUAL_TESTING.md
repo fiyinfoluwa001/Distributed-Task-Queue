@@ -615,7 +615,83 @@ Search (`Ctrl+F`) for these in the page:
 
 ---
 
-## Section 8 — Full end-to-end flow test
+## Section 8 — Webhook & email notifications
+
+Tasks support two optional notification fields you supply at creation time.
+
+### 8.1 Webhook notification
+
+Use a free webhook inspector like **https://webhook.site** to get a unique URL, then create a task with that URL:
+
+```graphql
+mutation CreateTaskWithWebhook {
+  createTask(input: {
+    title: "Webhook test"
+    webhookUrl: "https://webhook.site/YOUR-UNIQUE-ID"
+  }) {
+    id
+    title
+    webhookUrl
+  }
+}
+```
+
+**What to expect:**
+- Once the task completes (or fails), the app sends an HTTP POST to your webhook URL
+- Switch to the webhook.site tab — you should see a request arrive with this JSON body:
+  ```json
+  {
+    "event": "task.completed",
+    "taskId": "...",
+    "status": "COMPLETED",
+    "result": { ... },
+    "error": null,
+    "timestamp": "..."
+  }
+  ```
+- If the task fails, `event` will be `"task.failed"` and `error` will contain the message
+
+### 8.2 Email notification
+
+Add SMTP credentials to your `.env` file first:
+
+```
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your@gmail.com
+SMTP_PASS=your-app-password
+SMTP_FROM=noreply@your-app.com
+```
+
+> For Gmail, generate an **App Password** (Google Account → Security → 2-Step Verification → App passwords). Do not use your main Gmail password.
+
+Then create a task with `notifyEmail`:
+
+```graphql
+mutation CreateTaskWithEmail {
+  createTask(input: {
+    title: "Email test"
+    notifyEmail: "recipient@example.com"
+  }) {
+    id
+    title
+    notifyEmail
+  }
+}
+```
+
+**What to expect:**
+- The recipient receives an email with subject `Task "Email test" completed` (or `failed`)
+- The body includes the task result (or error message)
+- If SMTP is not configured (vars are empty), the email step is silently skipped — no error
+
+### 8.3 Both at once
+
+You can set both fields on the same task — they are independent and use `Promise.allSettled`, so a webhook failure does not block the email (and vice versa).
+
+---
+
+## Section 9 — Full end-to-end flow test
 
 Run this sequence in order to exercise every part of the system at once:
 

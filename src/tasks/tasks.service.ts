@@ -21,6 +21,8 @@ export class TasksService {
         priority: input.priority || "NORMAL",
         payload: input.payload,
         scheduledAt: input.scheduledAt,
+        webhookUrl: input.webhookUrl,
+        notifyEmail: input.notifyEmail,
         userId,
       },
       include: { user: true },
