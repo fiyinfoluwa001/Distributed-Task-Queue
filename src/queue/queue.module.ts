@@ -17,6 +17,7 @@ import { TaskProcessor } from "./task.processor";
       inject: [ConfigService],
     }),
     BullModule.registerQueue({ name: "tasks" }),
+    BullModule.registerQueue({ name: "dead-tasks" }),
   ],
   providers: [QueueService, TaskProcessor],
   exports: [QueueService],

@@ -12,6 +12,7 @@ export class QueueService {
 
   constructor(
     @InjectQueue("tasks") private taskQueue: Queue,
+    @InjectQueue("dead-tasks") private deadTaskQueue: Queue,
     private configService: ConfigService
   ) {
     this.redisClient = new Redis({
@@ -35,6 +36,14 @@ export class QueueService {
         },
         delay: task.scheduledAt ? task.scheduledAt.getTime() - Date.now() : 0,
       }
+    );
+  }
+
+  async addToDeadLetterQueue(taskId: string): Promise<void> {
+    await this.deadTaskQueue.add(
+      "dead-task",
+      { taskId },
+      { removeOnComplete: false, removeOnFail: false }
     );
   }
 

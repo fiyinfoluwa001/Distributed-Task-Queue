@@ -80,6 +80,20 @@ export class TasksResolver {
     return task;
   }
 
+  @Query("deadTasks")
+  @UseGuards(GqlAuthGuard)
+  async deadTasks() {
+    return this.tasksService.deadTasks();
+  }
+
+  @Mutation("replayDeadTask")
+  @UseGuards(GqlAuthGuard)
+  async replayDeadTask(@Args("id") id: string) {
+    const task = await this.tasksService.replayDeadTask(id);
+    this.pubSubService.publish("taskUpdated", { taskUpdated: task });
+    return task;
+  }
+
   @Subscription("taskCreated")
   taskCreated() {
     return this.pubSubService.asyncIterator("taskCreated");

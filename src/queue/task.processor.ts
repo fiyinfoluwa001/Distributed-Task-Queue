@@ -45,8 +45,9 @@ export class TaskProcessor extends WorkerHost {
       return;
     }
 
+    let task: any;
     try {
-      const task = await this.prisma.task.update({
+      task = await this.prisma.task.update({
         where: { id: taskId },
         data: {
           status: TaskStatus.PROCESSING,
@@ -78,23 +79,43 @@ export class TaskProcessor extends WorkerHost {
     } catch (error) {
       this.logger.error(`Task ${taskId} failed:`, error);
 
-      const failedTask = await this.prisma.task.update({
-        where: { id: taskId },
-        data: {
-          status: TaskStatus.FAILED,
-          error: error.message,
-        },
-      });
+      if (task?.attempts >= task?.maxRetries) {
+        const deadTask = await this.prisma.task.update({
+          where: { id: taskId },
+          data: {
+            status: TaskStatus.DEAD,
+            deadAt: new Date(),
+            error: error.message,
+          },
+        });
 
-      await this.logWorkerActivity(
-        taskId,
-        `Task failed: ${error.message}`,
-        "error"
-      );
+        await this.logWorkerActivity(
+          taskId,
+          `Task exhausted retries and moved to dead letter queue: ${error.message}`,
+          "error"
+        );
 
-      await this.notificationsService.notifyTaskFailed(failedTask);
+        await this.queueService.addToDeadLetterQueue(taskId);
+        await this.notificationsService.notifyTaskFailed(deadTask);
+      } else {
+        const failedTask = await this.prisma.task.update({
+          where: { id: taskId },
+          data: {
+            status: TaskStatus.FAILED,
+            error: error.message,
+          },
+        });
 
-      throw error;
+        await this.logWorkerActivity(
+          taskId,
+          `Task failed: ${error.message}`,
+          "error"
+        );
+
+        await this.notificationsService.notifyTaskFailed(failedTask);
+
+        throw error;
+      }
     } finally {
       await this.queueService.releaseLock(taskId, this.workerId);
     }
