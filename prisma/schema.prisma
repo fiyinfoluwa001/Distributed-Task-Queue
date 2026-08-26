@@ -25,6 +25,7 @@ enum TaskStatus {
   COMPLETED
   FAILED
   CANCELLED
+  DEAD
 }
 
 enum TaskPriority {
@@ -67,6 +68,7 @@ model Task {
   
   webhookUrl  String?
   notifyEmail String?
+  deadAt      DateTime?
 
   userId      String
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)

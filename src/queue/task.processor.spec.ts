@@ -19,6 +19,7 @@ const mockPrisma = {
 const mockQueueService = {
   acquireLock: jest.fn(),
   releaseLock: jest.fn(),
+  addToDeadLetterQueue: jest.fn(),
 };
 
 const mockPubSubService = {
@@ -67,6 +68,7 @@ describe("TaskProcessor", () => {
     mockPubSubService.publish.mockResolvedValue(undefined);
     mockNotificationsService.notifyTaskCompleted.mockResolvedValue(undefined);
     mockNotificationsService.notifyTaskFailed.mockResolvedValue(undefined);
+    mockQueueService.addToDeadLetterQueue.mockResolvedValue(undefined);
   });
 
   describe("process", () => {
@@ -293,6 +295,88 @@ describe("TaskProcessor", () => {
       expect(
         mockNotificationsService.notifyTaskCompleted
       ).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("dead letter queue", () => {
+    function mockTaskWithRetries(attempts: number, maxRetries: number) {
+      mockPrisma.task.update.mockImplementation((args) => {
+        if (args.data?.status === TaskStatus.PROCESSING) {
+          return Promise.resolve({ id: "task-1", payload: {}, userId: "user-1", attempts, maxRetries });
+        }
+        return Promise.resolve({ id: "task-1", userId: "user-1", attempts, maxRetries });
+      });
+    }
+
+    it("should mark task as DEAD when attempts >= maxRetries on failure", async () => {
+      mockTaskWithRetries(3, 3);
+      jest.spyOn(processor as any, "executeTask").mockRejectedValue(new Error("boom"));
+
+      await (processor as any).handleTask(makeJob("process-task", { taskId: "task-1" }));
+
+      const deadCall = mockPrisma.task.update.mock.calls.find(
+        ([arg]) => arg.data?.status === TaskStatus.DEAD
+      );
+      expect(deadCall).toBeDefined();
+    });
+
+    it("should set deadAt on the task when dead-lettered", async () => {
+      mockTaskWithRetries(3, 3);
+      jest.spyOn(processor as any, "executeTask").mockRejectedValue(new Error("boom"));
+
+      await (processor as any).handleTask(makeJob("process-task", { taskId: "task-1" }));
+
+      const deadCall = mockPrisma.task.update.mock.calls.find(
+        ([arg]) => arg.data?.status === TaskStatus.DEAD
+      );
+      expect(deadCall![0].data.deadAt).toBeInstanceOf(Date);
+    });
+
+    it("should call addToDeadLetterQueue when task exhausts retries", async () => {
+      mockTaskWithRetries(3, 3);
+      jest.spyOn(processor as any, "executeTask").mockRejectedValue(new Error("boom"));
+
+      await (processor as any).handleTask(makeJob("process-task", { taskId: "task-1" }));
+
+      expect(mockQueueService.addToDeadLetterQueue).toHaveBeenCalledWith("task-1");
+    });
+
+    it("should NOT re-throw when task is dead-lettered so BullMQ does not retry", async () => {
+      mockTaskWithRetries(3, 3);
+      jest.spyOn(processor as any, "executeTask").mockRejectedValue(new Error("boom"));
+
+      await expect(
+        (processor as any).handleTask(makeJob("process-task", { taskId: "task-1" }))
+      ).resolves.not.toThrow();
+    });
+
+    it("should still re-throw when attempts < maxRetries so BullMQ retries", async () => {
+      mockTaskWithRetries(2, 3);
+      jest.spyOn(processor as any, "executeTask").mockRejectedValue(new Error("boom"));
+
+      await expect(
+        (processor as any).handleTask(makeJob("process-task", { taskId: "task-1" }))
+      ).rejects.toThrow("boom");
+    });
+
+    it("should not call addToDeadLetterQueue when attempts < maxRetries", async () => {
+      mockTaskWithRetries(2, 3);
+      jest.spyOn(processor as any, "executeTask").mockRejectedValue(new Error("boom"));
+
+      await expect(
+        (processor as any).handleTask(makeJob("process-task", { taskId: "task-1" }))
+      ).rejects.toThrow();
+
+      expect(mockQueueService.addToDeadLetterQueue).not.toHaveBeenCalled();
+    });
+
+    it("should call notifyTaskFailed even when task is dead-lettered", async () => {
+      mockTaskWithRetries(3, 3);
+      jest.spyOn(processor as any, "executeTask").mockRejectedValue(new Error("boom"));
+
+      await (processor as any).handleTask(makeJob("process-task", { taskId: "task-1" }));
+
+      expect(mockNotificationsService.notifyTaskFailed).toHaveBeenCalled();
     });
   });
 });

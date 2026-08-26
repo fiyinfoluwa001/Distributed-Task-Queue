@@ -121,6 +121,38 @@ export class TasksService {
     return updatedTask;
   }
 
+  async deadTasks() {
+    return this.prisma.task.findMany({
+      where: { status: TaskStatus.DEAD },
+      include: { user: true },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  async replayDeadTask(id: string) {
+    const task = await this.getTask(id);
+
+    if (task.status !== TaskStatus.DEAD) {
+      throw new Error("Can only replay dead tasks");
+    }
+
+    const updatedTask = await this.prisma.task.update({
+      where: { id },
+      data: {
+        status: TaskStatus.QUEUED,
+        error: null,
+        attempts: 0,
+        progress: 0,
+        deadAt: null,
+      },
+      include: { user: true },
+    });
+
+    await this.queueService.addTask(updatedTask);
+
+    return updatedTask;
+  }
+
   async getTaskStats() {
     const stats = await this.prisma.task.groupBy({
       by: ["status"],

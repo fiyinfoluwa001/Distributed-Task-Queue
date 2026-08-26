@@ -20,6 +20,10 @@ const mockQueue = {
   getFailedCount: jest.fn().mockResolvedValue(2),
 };
 
+const mockDeadQueue = {
+  add: jest.fn().mockResolvedValue({}),
+};
+
 const mockConfigService = {
   get: jest.fn((key: string, fallback?: any) => {
     const values: Record<string, any> = {
@@ -38,6 +42,7 @@ describe("QueueService", () => {
       providers: [
         QueueService,
         { provide: getQueueToken("tasks"), useValue: mockQueue },
+        { provide: getQueueToken("dead-tasks"), useValue: mockDeadQueue },
         { provide: ConfigService, useValue: mockConfigService },
       ],
     }).compile();
@@ -117,6 +122,18 @@ describe("QueueService", () => {
       (service as any).redisClient.set.mockResolvedValue(null);
       const result = await service.acquireLock("task-1", "worker-2");
       expect(result).toBe(false);
+    });
+  });
+
+  describe("addToDeadLetterQueue", () => {
+    it("should add a dead-task job to the dead-tasks queue with the taskId", async () => {
+      await service.addToDeadLetterQueue("task-42");
+
+      expect(mockDeadQueue.add).toHaveBeenCalledWith(
+        "dead-task",
+        { taskId: "task-42" },
+        expect.any(Object)
+      );
     });
   });
 

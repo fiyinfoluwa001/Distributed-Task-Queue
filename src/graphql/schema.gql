@@ -24,6 +24,7 @@ type Task {
   completedAt: DateTime
   webhookUrl: String
   notifyEmail: String
+  deadAt: DateTime
   userId: String!
   user: User!
   workerId: String
@@ -67,6 +68,7 @@ enum TaskStatus {
   COMPLETED
   FAILED
   CANCELLED
+  DEAD
 }
 
 enum TaskPriority {
@@ -113,6 +115,7 @@ type Query {
   tasks(status: TaskStatus, limit: Int, offset: Int): [Task!]!
   taskStats: TaskStats!
   queueHealth: QueueHealth!
+  deadTasks: [Task!]!
 }
 
 type Mutation {
@@ -123,6 +126,7 @@ type Mutation {
   updateTask(id: ID!, input: UpdateTaskInput!): Task!
   cancelTask(id: ID!): Task!
   retryTask(id: ID!): Task!
+  replayDeadTask(id: ID!): Task!
 
   processNextTask: Task
 }
